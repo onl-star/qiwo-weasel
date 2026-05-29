@@ -7,6 +7,7 @@ if not exist env.bat copy env.bat.template env.bat
 if exist env.bat call env.bat
 
 if not defined WEASEL_ROOT set WEASEL_ROOT=%CD%
+if not defined QIWO_FROST_ROOT set QIWO_FROST_ROOT=%WEASEL_ROOT%\..\rime-frost
 
 if not defined VERSION_MAJOR set VERSION_MAJOR=0
 if not defined VERSION_MINOR set VERSION_MINOR=17
@@ -198,6 +199,7 @@ del msbuild*.log
 
 if defined SDKVER set build_sdk_option=/p:WindowsTargetPlatformVersion=%SDKVER%
 if not defined SDKVER set build_sdk_option=
+if not defined MAKENSIS set "MAKENSIS=%ProgramFiles(x86)%\NSIS\Bin\makensis.exe"
 
 if %build_arm64% == 1 (
 
@@ -228,7 +230,8 @@ call :stage_qiwo_frost
 if errorlevel 1 goto error
 
 if %build_installer% == 1 (
-  "%ProgramFiles(x86)%"\NSIS\Bin\makensis.exe ^
+  "%MAKENSIS%" ^
+  /INPUTCHARSET UTF8 ^
   /DWEASEL_VERSION=%WEASEL_VERSION% ^
   /DWEASEL_BUILD=%WEASEL_BUILD% ^
   /DPRODUCT_VERSION=%PRODUCT_VERSION% ^
@@ -293,6 +296,21 @@ rem ---------------------------------------------------------------------------
 :build_data
   copy %WEASEL_ROOT%\LICENSE.txt output\
   copy %WEASEL_ROOT%\README.md output\README.txt
+  if exist "%QIWO_FROST_ROOT%\essay.txt" (
+    if not exist output\data mkdir output\data
+    copy /Y "%QIWO_FROST_ROOT%\essay.txt" output\data\
+    copy /Y "%QIWO_FROST_ROOT%\*.yaml" output\data\
+    if not exist output\rime-install.bat (
+      echo @echo off> output\rime-install.bat
+      echo echo Qiwo bundles rime-frost by default.>> output\rime-install.bat
+      echo echo Additional schema installation is not bundled in this build.>> output\rime-install.bat
+    )
+    exit /b 0
+  )
+  if not exist "%WEASEL_ROOT%\plum\rime-install.bat" (
+    echo Error: neither rime-frost nor plum is available for data staging.
+    goto error
+  )
   copy %WEASEL_ROOT%\plum\rime-install.bat output\
   set plum_dir=plum
   set rime_dir=output/data
@@ -326,12 +344,12 @@ rem ---------------------------------------------------------------------------
 
 rem ---------------------------------------------------------------------------
 :stage_qiwo_frost
-  if not exist "%WEASEL_ROOT%\..\rime-frost\rime_frost.schema.yaml" (
+  if not exist "%QIWO_FROST_ROOT%\rime_frost.schema.yaml" (
     echo rime-frost not found; skipping bundled rime-frost staging.
     exit /b 0
   )
   if exist "%WEASEL_ROOT%\output\data\rime-frost" rd /s /q "%WEASEL_ROOT%\output\data\rime-frost"
-  robocopy "%WEASEL_ROOT%\..\rime-frost" "%WEASEL_ROOT%\output\data\rime-frost" /E /XD .git
+  robocopy "%QIWO_FROST_ROOT%" "%WEASEL_ROOT%\output\data\rime-frost" /E /XD .git
   if %ERRORLEVEL% GTR 7 goto error
   exit /b 0
 

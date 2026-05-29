@@ -7,7 +7,7 @@ if not defined BOOST_ROOT set BOOST_ROOT=%WEASEL_ROOT%\deps\boost_1_78_0
 
 rem OPTIONAL: architecture, Visual Studio version and platform toolset
 rem set ARCH=Win32
-set BJAM_TOOLSET=msvc-14.3
+set BJAM_TOOLSET=msvc
 set CMAKE_GENERATOR="Visual Studio 17 2022"
 set PLATFORM_TOOLSET=v143
 

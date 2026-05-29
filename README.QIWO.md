@@ -39,3 +39,13 @@ optional if the WebDAV endpoint does not need Basic auth.
 
 When building Weasel, it publishes the sync CLI and stages `rime-frost` resources
 before creating an installer.
+
+For a self-contained Qiwo build on Windows, run:
+
+```batch
+build-qiwo.bat
+```
+
+The wrapper downloads/stages Boost, prebuilt librime, portable NSIS, Qiwo sync,
+and rime-frost data under this working copy before invoking the normal Weasel
+build.

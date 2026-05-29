@@ -5,6 +5,10 @@
 !include x64.nsh
 !include winVer.nsh
 
+!ifndef AtLeastWin11
+!define AtLeastWin11 '${AtLeastBuild} 22000'
+!endif
+
 Unicode true
 
 ;--------------------------------
@@ -18,14 +22,14 @@ Unicode true
 !define WEASEL_BUILD 0
 !endif
 
-!define WEASEL_ROOT $INSTDIR\weasel-${WEASEL_VERSION}
+!define WEASEL_ROOT $INSTDIR\qiwo-weasel-${WEASEL_VERSION}
 !define REG_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\Weasel"
 
 ; The name of the installer
 Name "齐我输入法 ${WEASEL_VERSION}"
 
 ; The file to write
-OutFile "archives\weasel-${PRODUCT_VERSION}-installer.exe"
+OutFile "archives\qiwo-weasel-${PRODUCT_VERSION}-installer.exe"
 
 VIProductVersion "${WEASEL_VERSION}.${WEASEL_BUILD}"
 VIAddVersionKey /LANG=2052 "ProductName" "齐我输入法"
