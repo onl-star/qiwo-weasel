@@ -38,6 +38,7 @@
 #define IDS_STR_DICT_SNAPSHOT           156
 #define IDS_STR_KCSS_DICT_SNAPSHOT      157
 #define IDS_STR_HELP                    158
+#define IDD_WEBDAV_SETTINGS             159
 #define IDC_SCHEMA_LIST                 1000
 #define IDC_SCHEMA_DESCRIPTION          1001
 #define IDC_GET_SCHEMATA                1002
@@ -50,6 +51,11 @@
 #define IDC_RESTORE                     1009
 #define IDC_EXPORT                      1010
 #define IDC_IMPORT                      1011
+#define IDC_WEBDAV_SERVER_URL           1012
+#define IDC_WEBDAV_REMOTE_PATH          1013
+#define IDC_WEBDAV_USERNAME             1014
+#define IDC_WEBDAV_PASSWORD             1015
+#define IDC_WEBDAV_DEVICE_ID            1016
 #define IDC_STATIC1                     -1
 
 // Next default values for new objects
@@ -57,9 +63,9 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
-#define _APS_NEXT_RESOURCE_VALUE        135
+#define _APS_NEXT_RESOURCE_VALUE        160
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1012
+#define _APS_NEXT_CONTROL_VALUE         1017
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

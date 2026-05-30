@@ -74,6 +74,7 @@ static int Run(LPTSTR lpCmdLine) {
                  L"/deploy		- Update Workspace\n"
                  L"/dict		- Manage dictionary\n"
                  L"/sync		- Sync user data through Qiwo WebDAV\n"
+                 L"/sync-settings	- Configure WebDAV sync\n"
                  L"/install		- Install Qiwo (Initial deployment)",
                  L"Qiwo Deployer", MB_ICONINFORMATION | MB_OK);
     }
@@ -93,6 +94,11 @@ static int Run(LPTSTR lpCmdLine) {
   bool sync_user_dict = !wcscmp(L"/sync", lpCmdLine);
   if (sync_user_dict) {
     return configurator.SyncUserData();
+  }
+
+  bool sync_settings = !wcscmp(L"/sync-settings", lpCmdLine);
+  if (sync_settings) {
+    return configurator.SyncSettings();
   }
 
   bool installing = !wcscmp(L"/install", lpCmdLine);

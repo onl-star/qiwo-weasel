@@ -188,18 +188,21 @@
   <ItemGroup>
     <ClInclude Include="Configurator.h" />
     <ClInclude Include="DictManagementDialog.h" />
+    <ClInclude Include="QiwoWebDavSettings.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="SwitcherSettingsDialog.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="UIStyleSettings.h" />
     <ClInclude Include="UIStyleSettingsDialog.h" />
+    <ClInclude Include="WebDavSettingsDialog.h" />
     <ClInclude Include="WeaselDeployer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\RimeWithWeasel\WeaselUtility.cpp" />
     <ClCompile Include="Configurator.cpp" />
     <ClCompile Include="DictManagementDialog.cpp" />
+    <ClCompile Include="QiwoWebDavSettings.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -209,6 +212,7 @@
     <ClCompile Include="SwitcherSettingsDialog.cpp" />
     <ClCompile Include="UIStyleSettings.cpp" />
     <ClCompile Include="UIStyleSettingsDialog.cpp" />
+    <ClCompile Include="WebDavSettingsDialog.cpp" />
     <ClCompile Include="WeaselDeployer.cpp" />
   </ItemGroup>
   <ItemGroup>

@@ -5,6 +5,8 @@
 #include "UIStyleSettings.h"
 #include "UIStyleSettingsDialog.h"
 #include "DictManagementDialog.h"
+#include "QiwoWebDavSettings.h"
+#include "WebDavSettingsDialog.h"
 #include <WeaselConstants.h>
 #include <WeaselIPC.h>
 #include <WeaselIPCData.h>
@@ -96,11 +98,15 @@ static int RunProcess(const std::filesystem::path& exe,
   return (int)exit_code;
 }
 
-static std::wstring CommonQiwoArgs() {
+static std::wstring CommonQiwoArgs(
+    const std::wstring& configured_device_id = std::wstring()) {
   std::wstring args = L"--frontend weasel --rime-user-dir ";
   args += QuoteArg(WeaselUserDataPath().wstring());
 
   auto device_id = GetEnvVar(L"QIWO_DEVICE_ID");
+  if (device_id.empty()) {
+    device_id = configured_device_id;
+  }
   if (!device_id.empty()) {
     args += L" --device-id ";
     args += QuoteArg(device_id);
@@ -337,27 +343,44 @@ int Configurator::SyncUserData() {
   int result = 0;
   {
     auto sync_tool = QiwoSyncToolPath();
+    auto settings = LoadQiwoWebDavSettings();
     auto remote_url = GetEnvVar(L"QIWO_WEBDAV_URL");
+    if (remote_url.empty()) {
+      remote_url = BuildQiwoRemoteUrl(settings);
+    }
+
     if (!std::filesystem::exists(sync_tool)) {
       MessageBoxW(NULL,
                   L"qiwo-rime-sync.exe was not found beside WeaselDeployer.",
                   get_weasel_ime_name().c_str(), MB_ICONERROR | MB_OK);
       result = 1;
     } else if (remote_url.empty()) {
-      MessageBoxW(NULL, L"QIWO_WEBDAV_URL is not set.",
+      MessageBoxW(NULL,
+                  L"WebDAV settings are not configured. Open WebDAV sync "
+                  L"settings or set QIWO_WEBDAV_URL.",
                   get_weasel_ime_name().c_str(), MB_ICONERROR | MB_OK);
       result = 1;
     } else {
       std::wstring args = L"sync ";
-      args += CommonQiwoArgs();
+      args += CommonQiwoArgs(settings.device_id);
       args += L" --remote-url ";
       args += QuoteArg(remote_url);
 
       auto username = GetEnvVar(L"QIWO_WEBDAV_USERNAME");
+      if (username.empty()) {
+        username = settings.username;
+      }
       if (!username.empty()) {
         args += L" --username ";
         args += QuoteArg(username);
+      }
+
+      auto password = GetEnvVar(L"QIWO_WEBDAV_PASSWORD");
+      if (!password.empty()) {
         args += L" --password-env QIWO_WEBDAV_PASSWORD";
+      } else if (!settings.password.empty()) {
+        args += L" --password ";
+        args += QuoteArg(settings.password);
       }
 
       result = RunProcess(sync_tool, args);
@@ -380,6 +403,12 @@ int Configurator::SyncUserData() {
     client.EndMaintenance();
   }
   return result;
+}
+
+int Configurator::SyncSettings() {
+  WebDavSettingsDialog dlg;
+  dlg.DoModal();
+  return 0;
 }
 
 int Configurator::InitFrost() {

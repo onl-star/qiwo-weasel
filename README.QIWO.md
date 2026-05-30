@@ -13,10 +13,29 @@ changes happen here.
 - installer staging copies bundled `rime-frost` into `data/rime-frost`
 - installer staging publishes `qiwo-rime-sync` into `qiwo-sync`
 - `WeaselDeployer.exe /sync` runs Qiwo WebDAV sync and redeploys Rime afterward
+- tray and TSF language bar menus expose WebDAV sync settings
 
-## WebDAV environment variables
+## WebDAV settings
 
-First version keeps configuration outside the UI:
+Open the tray menu or the TSF language bar menu, then choose
+`WebDAV sync settings`. The dialog stores settings under the Rime user folder:
+
+```text
+.qiwo-sync/webdav.ini
+```
+
+The saved fields are:
+
+```ini
+[webdav]
+server_url=https://dav.example.com
+remote_path=qiwo-rime-sync
+username=name
+password=password
+device_id=windows-main
+```
+
+Environment variables still override saved settings when present:
 
 ```powershell
 $env:QIWO_WEBDAV_URL = "https://dav.example.com/qiwo-rime-sync"
@@ -25,8 +44,8 @@ $env:QIWO_WEBDAV_PASSWORD = "password"
 $env:QIWO_DEVICE_ID = "windows-main"
 ```
 
-`QIWO_WEBDAV_URL` is required for sync. The username/password variables are
-optional if the WebDAV endpoint does not need Basic auth.
+The username/password fields are optional if the WebDAV endpoint does not need
+Basic auth.
 
 ## Build notes
 
