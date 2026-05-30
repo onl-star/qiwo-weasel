@@ -40,17 +40,26 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
   CreateDirectory(WeaselUserDataPath().c_str(), NULL);
 
   int ret = 0;
-  HANDLE hMutex = CreateMutex(NULL, TRUE, L"WeaselDeployerExclusiveMutex");
-  if (!hMutex) {
-    ret = 1;
-  } else if (GetLastError() == ERROR_ALREADY_EXISTS) {
-    ret = 1;
-  } else {
-    ret = Run(lpCmdLine);
-  }
 
-  if (hMutex) {
-    CloseHandle(hMutex);
+  bool needs_mutex = !wcscmp(L"/deploy", lpCmdLine) ||
+                     !wcscmp(L"/sync", lpCmdLine) ||
+                     !wcscmp(L"/install", lpCmdLine);
+
+  if (!needs_mutex) {
+    ret = Run(lpCmdLine);
+  } else {
+    HANDLE hMutex =
+        CreateMutex(NULL, TRUE, L"WeaselDeployerExclusiveMutex");
+    if (!hMutex) {
+      ret = 1;
+    } else if (GetLastError() == ERROR_ALREADY_EXISTS) {
+      ret = 1;
+    } else {
+      ret = Run(lpCmdLine);
+    }
+    if (hMutex) {
+      CloseHandle(hMutex);
+    }
   }
   _Module.Term();
   ::CoUninitialize();
