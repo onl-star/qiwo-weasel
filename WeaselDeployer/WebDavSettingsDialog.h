@@ -13,12 +13,14 @@ class WebDavSettingsDialog : public CDialogImpl<WebDavSettingsDialog> {
   MESSAGE_HANDLER(WM_CLOSE, OnClose)
   COMMAND_ID_HANDLER(IDOK, OnSave)
   COMMAND_ID_HANDLER(IDCANCEL, OnCancel)
+  COMMAND_ID_HANDLER(IDC_WEBDAV_TEST_CONNECTION, OnTestConnection)
   END_MSG_MAP()
 
   LRESULT OnInitDialog(UINT, WPARAM, LPARAM, BOOL&);
   LRESULT OnClose(UINT, WPARAM, LPARAM, BOOL&);
   LRESULT OnSave(WORD, WORD, HWND, BOOL&);
   LRESULT OnCancel(WORD, WORD, HWND, BOOL&);
+  LRESULT OnTestConnection(WORD, WORD, HWND, BOOL&);
 
  private:
   std::wstring GetText(int control_id) const;

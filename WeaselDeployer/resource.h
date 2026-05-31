@@ -56,6 +56,7 @@
 #define IDC_WEBDAV_USERNAME             1014
 #define IDC_WEBDAV_PASSWORD             1015
 #define IDC_WEBDAV_DEVICE_ID            1016
+#define IDC_WEBDAV_TEST_CONNECTION      1017
 #define IDC_STATIC1                     -1
 
 // Next default values for new objects
@@ -65,7 +66,7 @@
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        160
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1017
+#define _APS_NEXT_CONTROL_VALUE         1018
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

@@ -63,6 +63,7 @@ For a self-contained Qiwo build on Windows, run:
 
 ```batch
 build-qiwo.bat
+build-qiwo.bat -NoDownloads # 如果已经有其他所需的组件
 ```
 
 The wrapper downloads/stages Boost, prebuilt librime, portable NSIS, Qiwo sync,
