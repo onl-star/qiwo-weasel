@@ -18,8 +18,17 @@ namespace fs = std::filesystem;
 class WeaselServerApp {
  public:
   static bool execute(const fs::path& cmd, const std::wstring& args) {
-    return (uintptr_t)ShellExecuteW(NULL, NULL, cmd.c_str(), args.c_str(), NULL,
-                                    SW_SHOWNORMAL) > 32;
+    HINSTANCE result =
+        ShellExecuteW(NULL, NULL, cmd.c_str(), args.c_str(), NULL, SW_SHOWNORMAL);
+    if ((uintptr_t)result <= 32) {
+      std::wstring msg = L"Failed to launch:\n";
+      msg += cmd.wstring();
+      msg += L"\n\nError code: " + std::to_wstring((uintptr_t)result);
+      MessageBoxW(NULL, msg.c_str(), get_weasel_ime_name().c_str(),
+                  MB_ICONERROR | MB_OK);
+      return false;
+    }
+    return true;
   }
 
   static bool explore(const fs::path& path) {

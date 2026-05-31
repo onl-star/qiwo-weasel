@@ -69,6 +69,7 @@ LangString LNKFORMANUAL ${LANG_TRADCHINESE} "【齐我输入法】說明書"
 LangString LNKFORSETTING ${LANG_TRADCHINESE} "【齐我输入法】輸入法設定"
 LangString LNKFORDICT ${LANG_TRADCHINESE} "【齐我输入法】用戶詞典管理"
 LangString LNKFORSYNC ${LANG_TRADCHINESE} "【齐我输入法】用戶資料同步"
+LangString LNKFORWEBDAV ${LANG_TRADCHINESE} "【齐我输入法】WebDAV 同步設定"
 LangString LNKFORDEPLOY ${LANG_TRADCHINESE} "【齐我输入法】重新部署"
 LangString LNKFORSERVER ${LANG_TRADCHINESE} "齊我輸入法算法服務"
 LangString LNKFORUSERFOLDER ${LANG_TRADCHINESE} "【齐我输入法】用戶文件夾"
@@ -86,6 +87,7 @@ LangString LNKFORMANUAL ${LANG_SIMPCHINESE} "【齐我输入法】说明书"
 LangString LNKFORSETTING ${LANG_SIMPCHINESE} "【齐我输入法】输入法设定"
 LangString LNKFORDICT ${LANG_SIMPCHINESE} "【齐我输入法】用户词典管理"
 LangString LNKFORSYNC ${LANG_SIMPCHINESE} "【齐我输入法】用户资料同步"
+LangString LNKFORWEBDAV ${LANG_SIMPCHINESE} "【齐我输入法】WebDAV 同步设置"
 LangString LNKFORDEPLOY ${LANG_SIMPCHINESE} "【齐我输入法】重新部署"
 LangString LNKFORSERVER ${LANG_SIMPCHINESE} "齐我输入法算法服务"
 LangString LNKFORUSERFOLDER ${LANG_SIMPCHINESE} "【齐我输入法】用户文件夹"
@@ -103,6 +105,7 @@ LangString LNKFORMANUAL ${LANG_ENGLISH} "Weasel Manual"
 LangString LNKFORSETTING ${LANG_ENGLISH} "Qiwo Settings"
 LangString LNKFORDICT ${LANG_ENGLISH} "Qiwo Dictionary Manager"
 LangString LNKFORSYNC ${LANG_ENGLISH} "Qiwo WebDAV Sync"
+LangString LNKFORWEBDAV ${LANG_ENGLISH} "Qiwo WebDAV Sync Settings"
 LangString LNKFORDEPLOY ${LANG_ENGLISH} "Qiwo Deploy"
 LangString LNKFORSERVER ${LANG_ENGLISH} "Qiwo Server"
 LangString LNKFORUSERFOLDER ${LANG_ENGLISH} "Qiwo User Folder"
@@ -375,6 +378,7 @@ Section "Start Menu Shortcuts"
   CreateShortCut "$SMPROGRAMS\$(DISPLAYNAME)\$(LNKFORSETTING).lnk" "$INSTDIR\WeaselDeployer.exe" "" "$SYSDIR\shell32.dll" 21
   CreateShortCut "$SMPROGRAMS\$(DISPLAYNAME)\$(LNKFORDICT).lnk" "$INSTDIR\WeaselDeployer.exe" "/dict" "$SYSDIR\shell32.dll" 6
   CreateShortCut "$SMPROGRAMS\$(DISPLAYNAME)\$(LNKFORSYNC).lnk" "$INSTDIR\WeaselDeployer.exe" "/sync" "$SYSDIR\shell32.dll" 26
+  CreateShortCut "$SMPROGRAMS\$(DISPLAYNAME)\$(LNKFORWEBDAV).lnk" "$INSTDIR\WeaselDeployer.exe" "/sync-settings" "$SYSDIR\shell32.dll" 26
   CreateShortCut "$SMPROGRAMS\$(DISPLAYNAME)\$(LNKFORDEPLOY).lnk" "$INSTDIR\WeaselDeployer.exe" "/deploy" "$SYSDIR\shell32.dll" 144
   CreateShortCut "$SMPROGRAMS\$(DISPLAYNAME)\$(LNKFORSERVER).lnk" "$INSTDIR\WeaselServer.exe" "" "$INSTDIR\WeaselServer.exe" 0
   CreateShortCut "$SMPROGRAMS\$(DISPLAYNAME)\$(LNKFORUSERFOLDER).lnk" "$INSTDIR\WeaselServer.exe" "/userdir" "$SYSDIR\shell32.dll" 126

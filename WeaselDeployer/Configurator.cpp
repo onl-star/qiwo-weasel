@@ -407,7 +407,11 @@ int Configurator::SyncUserData() {
 
 int Configurator::SyncSettings() {
   WebDavSettingsDialog dlg;
-  dlg.DoModal();
+  INT_PTR result = dlg.DoModal();
+  if (result == -1) {
+    MessageBoxW(NULL, L"Failed to create WebDAV settings dialog.",
+                get_weasel_ime_name().c_str(), MB_ICONERROR | MB_OK);
+  }
   return 0;
 }
 
