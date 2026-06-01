@@ -1,0 +1,18 @@
+# Downloaded rime archives
+*.7z
+
+# Build logs
+*.log
+
+# Dependencies
+deps/
+include/
+
+# Build outputs
+lib/
+lib64/
+output/
+msbuild/
+
+# Visual Studio
+.vs/
