@@ -61,8 +61,7 @@ QiwoWebDavSettings LoadQiwoWebDavSettings() {
   settings.username = ReadIniString(file, L"username");
   settings.password = ReadIniString(file, L"password");
   settings.device_id = ReadIniString(file, L"device_id");
-  settings.auto_sync =
-      ReadIniString(file, L"auto_sync", L"0") == L"1";
+  settings.auto_sync = ReadIniString(file, L"auto_sync", L"0") == L"1";
   settings.sync_interval_minutes =
       _wtoi(ReadIniString(file, L"sync_interval_minutes", L"60").c_str());
   if (settings.sync_interval_minutes < 1)

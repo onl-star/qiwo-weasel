@@ -13,8 +13,7 @@ std::wstring WebDavSettingsDialog::GetText(int control_id) const {
   return buffer.data();
 }
 
-void WebDavSettingsDialog::SetText(int control_id,
-                                   const std::wstring& value) {
+void WebDavSettingsDialog::SetText(int control_id, const std::wstring& value) {
   SetDlgItemText(control_id, value.c_str());
 }
 
@@ -29,8 +28,8 @@ LRESULT WebDavSettingsDialog::OnInitDialog(UINT, WPARAM, LPARAM, BOOL&) {
 
   CheckDlgButton(IDC_WEBDAV_AUTO_SYNC,
                  settings_.auto_sync ? BST_CHECKED : BST_UNCHECKED);
-  SetDlgItemInt(IDC_WEBDAV_SYNC_INTERVAL,
-                settings_.sync_interval_minutes, FALSE);
+  SetDlgItemInt(IDC_WEBDAV_SYNC_INTERVAL, settings_.sync_interval_minutes,
+                FALSE);
 
   CenterWindow();
   BringWindowToTop();
@@ -48,8 +47,7 @@ LRESULT WebDavSettingsDialog::OnSave(WORD, WORD, HWND, BOOL&) {
   settings_.username = GetText(IDC_WEBDAV_USERNAME);
   settings_.password = GetText(IDC_WEBDAV_PASSWORD);
   settings_.device_id = GetText(IDC_WEBDAV_DEVICE_ID);
-  settings_.auto_sync =
-      IsDlgButtonChecked(IDC_WEBDAV_AUTO_SYNC) == BST_CHECKED;
+  settings_.auto_sync = IsDlgButtonChecked(IDC_WEBDAV_AUTO_SYNC) == BST_CHECKED;
   settings_.sync_interval_minutes =
       GetDlgItemInt(IDC_WEBDAV_SYNC_INTERVAL, NULL, FALSE);
   if (settings_.sync_interval_minutes < 1)
@@ -145,8 +143,8 @@ LRESULT WebDavSettingsDialog::OnTestConnection(WORD, WORD, HWND, BOOL&) {
   } else {
     std::wstring msg = L"Connection failed.\n\ncurl exit code: ";
     msg += std::to_wstring(exit_code);
-    ::MessageBoxW(m_hWnd, msg.c_str(),
-                  get_weasel_ime_name().c_str(), MB_ICONERROR | MB_OK);
+    ::MessageBoxW(m_hWnd, msg.c_str(), get_weasel_ime_name().c_str(),
+                  MB_ICONERROR | MB_OK);
   }
   return 0;
 }

@@ -116,7 +116,8 @@ static std::wstring CommonQiwoArgs(
 }
 
 static bool EnsureDefaultCustomYaml() {
-  std::filesystem::path file_path = WeaselUserDataPath() / L"default.custom.yaml";
+  std::filesystem::path file_path =
+      WeaselUserDataPath() / L"default.custom.yaml";
   if (std::filesystem::exists(file_path) &&
       std::filesystem::file_size(file_path) > 0) {
     return true;
@@ -433,7 +434,8 @@ int Configurator::SyncUserDict() {
   args += QuoteArg(remote_url);
 
   auto username = GetEnvVar(L"QIWO_WEBDAV_USERNAME");
-  if (username.empty()) username = settings.username;
+  if (username.empty())
+    username = settings.username;
   if (!username.empty()) {
     args += L" --username ";
     args += QuoteArg(username);

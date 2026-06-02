@@ -10,11 +10,16 @@ WeaselServerApp::WeaselServerApp()
   SetupMenuHandlers();
 }
 
-WeaselServerApp::~WeaselServerApp() { StopAutoSync(); }
+WeaselServerApp::~WeaselServerApp() {
+  StopAutoSync();
+}
 
-VOID CALLBACK WeaselServerApp::AutoSyncTimerProc(HWND hwnd, UINT, UINT_PTR id, DWORD) {
-  auto* self = reinterpret_cast<WeaselServerApp*>(
-      GetWindowLongPtr(hwnd, GWLP_USERDATA));
+VOID CALLBACK WeaselServerApp::AutoSyncTimerProc(HWND hwnd,
+                                                 UINT,
+                                                 UINT_PTR id,
+                                                 DWORD) {
+  auto* self =
+      reinterpret_cast<WeaselServerApp*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
   if (self) {
     self->OnAutoSync();
   }
@@ -27,14 +32,22 @@ void WeaselServerApp::OnAutoSync() {
 
 void WeaselServerApp::StartAutoSync() {
   StopAutoSync();
-  auto settings = LoadQiwoWebDavSettings();
-  if (!settings.auto_sync || settings.sync_interval_minutes <= 0)
+
+  // 直接读取 INI 设置（不依赖 WeaselDeployer 项目）
+  auto ini_path = WeaselUserDataPath() / L".qiwo-sync" / L"webdav.ini";
+  bool auto_sync =
+      GetPrivateProfileIntW(L"webdav", L"auto_sync", 0, ini_path.c_str()) != 0;
+  if (!auto_sync)
     return;
 
-  UINT elapse = static_cast<UINT>(settings.sync_interval_minutes) * 60 * 1000;
-  m_nAutoSyncTimerId = SetTimer(m_server.GetHWnd(), 1, elapse,
-                                 AutoSyncTimerProc);
-  // 存储 this 指针供 timer callback 使用
+  int interval_minutes = GetPrivateProfileIntW(
+      L"webdav", L"sync_interval_minutes", 60, ini_path.c_str());
+  if (interval_minutes <= 0)
+    return;
+
+  UINT elapse = static_cast<UINT>(interval_minutes) * 60 * 1000;
+  m_nAutoSyncTimerId =
+      SetTimer(m_server.GetHWnd(), 1, elapse, AutoSyncTimerProc);
   SetWindowLongPtr(m_server.GetHWnd(), GWLP_USERDATA,
                    reinterpret_cast<LONG_PTR>(this));
 }
@@ -99,10 +112,9 @@ void WeaselServerApp::SetupMenuHandlers() {
   m_server.AddMenuHandler(
       ID_WEASELTRAY_SYNC,
       std::bind(execute, dir / L"WeaselDeployer.exe", std::wstring(L"/sync")));
-  m_server.AddMenuHandler(
-      ID_WEASELTRAY_SYNC_SETTINGS,
-      std::bind(execute, dir / L"WeaselDeployer.exe",
-                std::wstring(L"/sync-settings")));
+  m_server.AddMenuHandler(ID_WEASELTRAY_SYNC_SETTINGS,
+                          std::bind(execute, dir / L"WeaselDeployer.exe",
+                                    std::wstring(L"/sync-settings")));
   m_server.AddMenuHandler(ID_WEASELTRAY_WIKI,
                           std::bind(open, L"https://rime.im/docs/"));
   m_server.AddMenuHandler(ID_WEASELTRAY_HOMEPAGE,

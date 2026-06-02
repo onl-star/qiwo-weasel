@@ -41,16 +41,14 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 
   int ret = 0;
 
-  bool needs_mutex = !wcscmp(L"/deploy", lpCmdLine) ||
-                     !wcscmp(L"/sync", lpCmdLine) ||
-                     !wcscmp(L"/sync-user-dict", lpCmdLine) ||
-                     !wcscmp(L"/install", lpCmdLine);
+  bool needs_mutex =
+      !wcscmp(L"/deploy", lpCmdLine) || !wcscmp(L"/sync", lpCmdLine) ||
+      !wcscmp(L"/sync-user-dict", lpCmdLine) || !wcscmp(L"/install", lpCmdLine);
 
   if (!needs_mutex) {
     ret = Run(lpCmdLine);
   } else {
-    HANDLE hMutex =
-        CreateMutex(NULL, TRUE, L"WeaselDeployerExclusiveMutex");
+    HANDLE hMutex = CreateMutex(NULL, TRUE, L"WeaselDeployerExclusiveMutex");
     if (!hMutex) {
       ret = 1;
     } else if (GetLastError() == ERROR_ALREADY_EXISTS) {
