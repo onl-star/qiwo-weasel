@@ -4,3 +4,7 @@
 [submodule "plum"]
 	path = plum
 	url = https://github.com/rime/plum.git
+[submodule "qiwo-sync-core"]
+	path = qiwo-sync-core
+	url = https://github.com/LeaWron/qiwo-sync-core.git
+	branch = main

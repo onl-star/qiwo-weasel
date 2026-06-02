@@ -58,6 +58,11 @@ jobs:
           cp env.vs2022.bat env.bat
           echo git_ref_name="$(git describe --always)" >> $GITHUB_ENV
 
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
       - name: Cache Boost
         id: cache-boost
         uses: actions/cache@v4

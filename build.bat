@@ -334,11 +334,15 @@ rem ---------------------------------------------------------------------------
 
 rem ---------------------------------------------------------------------------
 :build_qiwo_sync
-  if not exist "%WEASEL_ROOT%\..\qiwo-sync-core\src\qiwo-rime-sync\qiwo-rime-sync.csproj" (
+  if exist "%WEASEL_ROOT%\qiwo-sync-core\src\qiwo-rime-sync\qiwo-rime-sync.csproj" (
+    set QIWO_SYNC_CORE_PROJ=%WEASEL_ROOT%\qiwo-sync-core\src\qiwo-rime-sync\qiwo-rime-sync.csproj
+  ) else if exist "%WEASEL_ROOT%\..\qiwo-sync-core\src\qiwo-rime-sync\qiwo-rime-sync.csproj" (
+    set QIWO_SYNC_CORE_PROJ=%WEASEL_ROOT%\..\qiwo-sync-core\src\qiwo-rime-sync\qiwo-rime-sync.csproj
+  ) else (
     echo qiwo-sync-core not found; skipping qiwo-rime-sync publish.
     exit /b 0
   )
-  dotnet publish "%WEASEL_ROOT%\..\qiwo-sync-core\src\qiwo-rime-sync\qiwo-rime-sync.csproj" -c Release -o "%WEASEL_ROOT%\output\qiwo-sync"
+  dotnet publish "%QIWO_SYNC_CORE_PROJ%" -c Release -o "%WEASEL_ROOT%\output\qiwo-sync"
   if errorlevel 1 goto error
   exit /b
 
