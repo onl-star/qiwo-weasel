@@ -129,6 +129,14 @@ jobs:
           $ErrorActionPreference = 'Stop'
           .\get-rime.ps1 -use dev
 
+      - name: Stage minimal rime-frost data
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path ..\rime-frost
+          Set-Content -Path ..\rime-frost\essay.txt -Value "placeholder"
+          Set-Content -Path ..\rime-frost\default.yaml -Value "placeholder"
+
       - name: Build data
         shell: pwsh
         run: |
