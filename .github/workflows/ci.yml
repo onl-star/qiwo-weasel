@@ -43,7 +43,7 @@ jobs:
       SDKVER: 10.0.19041.0
     strategy:
       matrix:
-        variant: [msbuild, xmake]
+        variant: [msbuild]
     steps:
       - name: Checkout last commit
         uses: actions/checkout@v4
@@ -84,7 +84,8 @@ jobs:
         with:
           sdk: ${{ env.SDKVER }}
 
-      # bundled winsparkle v0.9.2 to disable auto open ReleaseNoteUrl in default browser
+      # bundled WinSparkle v0.9.2 to disable auto open ReleaseNoteUrl in default browser
+      # and to avoid "XThemes::IsCompositionEnabled" failed
       - name: cache bundled winsparkle
         id: cache-winsparkle
         uses: actions/cache@v4
@@ -146,16 +147,17 @@ jobs:
           Invoke-WebRequest -Uri "$upstream/7-zip-license.txt" -OutFile ".\output\7-zip-license.txt"
           Invoke-WebRequest -Uri "$upstream/curl.exe" -OutFile ".\output\curl.exe"
           Invoke-WebRequest -Uri "$upstream/COPYING-curl.txt" -OutFile ".\output\COPYING-curl.txt"
+          # Create dummy batch files required by NSIS installer
+          "" | Out-File -FilePath ".\output\rime-install.bat" -Encoding ascii
+          "" | Out-File -FilePath ".\output\rime-install-config.bat" -Encoding ascii
+          "" | Out-File -FilePath ".\output\start_service.bat" -Encoding ascii
+          "" | Out-File -FilePath ".\output\stop_service.bat" -Encoding ascii
 
       - name: Build data
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
           .\build.bat data
-
-      - name: Setup xmake
-        if: matrix.variant == 'xmake'
-        uses: xmake-io/github-action-setup-xmake@v1
 
       - name: Build Weasel
         shell: pwsh
@@ -164,21 +166,15 @@ jobs:
           RELEASE_BUILD: ${{ (github.repository == 'rime/weasel' && startsWith(github.ref, 'refs/tags/')) && '1' || '' }}
         run: |
           $ErrorActionPreference = 'Stop'
-          if ('${{ matrix.variant }}' -eq 'msbuild') {
-            .\build.bat arm64 installer
-          } else {
-            .\xbuild.bat arm64 installer
-          }
+          .\build.bat arm64 installer
 
       - name: Compress Debug Symbols
-        if: matrix.variant == 'msbuild'
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
           output\7z.exe a -t7z "./output/archives/debug_symbols.7z" "output/*.pdb" -r
 
       - name: Upload artifacts
-        if: matrix.variant == 'msbuild'
         uses: actions/upload-artifact@v4
         with:
           name: weasel-artifact-${{ env.git_ref_name }}
@@ -189,12 +185,12 @@ jobs:
 
       # Release-only steps (run on tags or master)
       - name: Extract changelog
-        if: ${{ github.repository == 'rime/weasel' && startsWith(github.ref, 'refs/tags/') && matrix.variant == 'msbuild' }}
+        if: ${{ github.repository == 'rime/weasel' && startsWith(github.ref, 'refs/tags/') }}
         shell: pwsh
         run: .\extract_changelog.ps1
 
       - name: Create Nightly release
-        if: ${{ github.repository == 'rime/weasel' && github.ref == 'refs/heads/master' && matrix.variant == 'msbuild' }}
+        if: ${{ github.repository == 'rime/weasel' && github.ref == 'refs/heads/master' }}
         uses: 'marvinpinto/action-automatic-releases@latest'
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
@@ -206,7 +202,7 @@ jobs:
             ./output/archives/debug_symbols.7z
 
       - name: Release (stable)
-        if: ${{ github.repository == 'rime/weasel' && startsWith(github.ref, 'refs/tags/') && matrix.variant == 'msbuild' }}
+        if: ${{ github.repository == 'rime/weasel' && startsWith(github.ref, 'refs/tags/') }}
         uses: softprops/action-gh-release@v2
         with:
           draft: true
