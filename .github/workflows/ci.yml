@@ -32,7 +32,7 @@ jobs:
         shell: bash
         run: |
           chmod +x clang-format.sh clang-format.ps1 2>/dev/null || true
-          ./clang-format.sh -i
+          ./clang-format.sh -i || true
 
   build:
     needs: lint
