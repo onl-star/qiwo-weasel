@@ -137,6 +137,16 @@ jobs:
           Set-Content -Path ..\rime-frost\essay.txt -Value "placeholder"
           Set-Content -Path ..\rime-frost\default.yaml -Value "placeholder"
 
+      - name: Fetch missing installer files
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $upstream = "https://raw.githubusercontent.com/rime/weasel/master/output"
+          Invoke-WebRequest -Uri "$upstream/7z.exe" -OutFile ".\output\7z.exe"
+          Invoke-WebRequest -Uri "$upstream/7-zip-license.txt" -OutFile ".\output\7-zip-license.txt"
+          Invoke-WebRequest -Uri "$upstream/curl.exe" -OutFile ".\output\curl.exe"
+          Invoke-WebRequest -Uri "$upstream/COPYING-curl.txt" -OutFile ".\output\COPYING-curl.txt"
+
       - name: Build data
         shell: pwsh
         run: |
