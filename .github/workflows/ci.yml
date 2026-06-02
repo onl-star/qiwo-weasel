@@ -270,7 +270,7 @@ jobs:
           name: weasel-artifact-${{ env.git_ref_name }}
           if-no-files-found: error
           path: |
-            .\output\archives\weasel*.exe
+            .\output\archives\*weasel*.exe
             .\output\archives\debug_symbols.7z
 
       - name: Extract changelog
@@ -287,7 +287,7 @@ jobs:
           prerelease: true
           title: "Nightly Build"
           files: |
-            ./output/archives/weasel*.exe
+            ./output/archives/*weasel*.exe
             ./output/archives/debug_symbols.7z
 
       - name: Release (stable)
@@ -296,6 +296,6 @@ jobs:
         with:
           draft: true
           files: |
-            ./output/archives/weasel*.exe
+            ./output/archives/*weasel*.exe
             ./output/archives/debug_symbols.7z
           body_path: ${{ github.workspace }}/RELEASE_CHANGELOG.md
