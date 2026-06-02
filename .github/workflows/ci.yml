@@ -34,8 +34,8 @@ jobs:
           chmod +x clang-format.sh clang-format.ps1 2>/dev/null || true
           ./clang-format.sh -i || true
 
-  # ── Prepare: download/build dependencies, cache them ──────────
-  prepare:
+  # ── Prepare Boost: download, build, cache ──────────────────────
+  prepare-boost:
     runs-on: windows-2022
     env:
       boost_version: 1.84.0
@@ -64,6 +64,13 @@ jobs:
           Copy-Item env.vs2022.bat env.bat
           & cmd /c ".\build.bat boost arm64"
 
+  # ── Prepare WinSparkle: clone, patch, build, cache ─────────────
+  prepare-winsparkle:
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Cache bundled WinSparkle
         id: cache-winsparkle
         uses: actions/cache@v4
@@ -90,17 +97,54 @@ jobs:
           msbuild -m -t:Build -p:Configuration=Release -p:Platform=x64 WinSparkle.sln
           msbuild -m -t:Build -p:Configuration=Release -p:Platform=Win32 WinSparkle.sln
 
+  # ── Prepare Rime + installer resources: download, cache ────────
+  prepare-assets:
+    runs-on: windows-2022
+    outputs:
+      rime-tag: ${{ steps.rime-tag.outputs.tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get latest Rime release tag
+        id: rime-tag
+        shell: pwsh
+        run: |
+          $response = Invoke-RestMethod -Uri "https://api.github.com/repos/rime/librime/releases/latest" -Headers @{Accept="application/vnd.github.v3+json"}
+          "tag=$($response.tag_name)" >> $env:GITHUB_OUTPUT
+
+      - name: Cache Rime + installer resources
+        id: cache-assets
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ github.workspace }}\include
+            ${{ github.workspace }}\lib
+            ${{ github.workspace }}\lib64
+            ${{ github.workspace }}\output\7z.exe
+            ${{ github.workspace }}\output\7-zip-license.txt
+            ${{ github.workspace }}\output\curl.exe
+            ${{ github.workspace }}\output\COPYING-curl.txt
+            ${{ github.workspace }}\output\rime-install.bat
+            ${{ github.workspace }}\output\rime-install-config.bat
+            ${{ github.workspace }}\output\start_service.bat
+            ${{ github.workspace }}\output\stop_service.bat
+            ${{ github.workspace }}\output\data\opencc
+            ${{ github.workspace }}\output\Win32
+            ${{ github.workspace }}\output\rime.dll
+            ${{ github.workspace }}\output\rime.pdb
+          key: ${{ runner.os }}-rime-assets-${{ steps.rime-tag.outputs.tag }}
+
       - name: Get Rime files
+        if: steps.cache-assets.outputs.cache-hit != 'true'
         shell: pwsh
         run: .\get-rime.ps1 -use dev
 
       - name: Prepare installer resources
+        if: steps.cache-assets.outputs.cache-hit != 'true'
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          New-Item -ItemType Directory -Force -Path ..\rime-frost
-          Set-Content -Path ..\rime-frost\essay.txt -Value "placeholder"
-          Set-Content -Path ..\rime-frost\default.yaml -Value "placeholder"
           $upstream = "https://raw.githubusercontent.com/rime/weasel/master/output"
           Invoke-WebRequest -Uri "$upstream/7z.exe" -OutFile ".\output\7z.exe"
           Invoke-WebRequest -Uri "$upstream/7-zip-license.txt" -OutFile ".\output\7-zip-license.txt"
@@ -113,7 +157,7 @@ jobs:
 
   # ── Build: uses cached dependencies to build the installer ────
   build:
-    needs: [lint, prepare]
+    needs: [lint, prepare-boost, prepare-winsparkle, prepare-assets]
     runs-on: windows-2022
     env:
       boost_version: 1.84.0
@@ -171,22 +215,34 @@ jobs:
           copy .\winsparkle\Release\WinSparkle.dll .\output\Win32\
           copy .\winsparkle\Release\WinSparkle.lib .\lib\
 
-      - name: Setup prebuilt Rime + installer files
+      - name: Restore Rime + installer assets
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ${{ github.workspace }}\include
+            ${{ github.workspace }}\lib
+            ${{ github.workspace }}\lib64
+            ${{ github.workspace }}\output\7z.exe
+            ${{ github.workspace }}\output\7-zip-license.txt
+            ${{ github.workspace }}\output\curl.exe
+            ${{ github.workspace }}\output\COPYING-curl.txt
+            ${{ github.workspace }}\output\rime-install.bat
+            ${{ github.workspace }}\output\rime-install-config.bat
+            ${{ github.workspace }}\output\start_service.bat
+            ${{ github.workspace }}\output\stop_service.bat
+            ${{ github.workspace }}\output\data\opencc
+            ${{ github.workspace }}\output\Win32
+            ${{ github.workspace }}\output\rime.dll
+            ${{ github.workspace }}\output\rime.pdb
+          key: ${{ runner.os }}-rime-assets-${{ needs.prepare-assets.outputs.rime-tag }}
+          fail-on-cache-miss: true
+
+      - name: Create rime-frost placeholder
         shell: pwsh
         run: |
-          $ErrorActionPreference = 'Stop'
           New-Item -ItemType Directory -Force -Path ..\rime-frost
           Set-Content -Path ..\rime-frost\essay.txt -Value "placeholder"
           Set-Content -Path ..\rime-frost\default.yaml -Value "placeholder"
-          $upstream = "https://raw.githubusercontent.com/rime/weasel/master/output"
-          Invoke-WebRequest -Uri "$upstream/7z.exe" -OutFile ".\output\7z.exe"
-          Invoke-WebRequest -Uri "$upstream/7-zip-license.txt" -OutFile ".\output\7-zip-license.txt"
-          Invoke-WebRequest -Uri "$upstream/curl.exe" -OutFile ".\output\curl.exe"
-          Invoke-WebRequest -Uri "$upstream/COPYING-curl.txt" -OutFile ".\output\COPYING-curl.txt"
-          "" | Out-File -FilePath ".\output\rime-install.bat" -Encoding ascii
-          "" | Out-File -FilePath ".\output\rime-install-config.bat" -Encoding ascii
-          "" | Out-File -FilePath ".\output\start_service.bat" -Encoding ascii
-          "" | Out-File -FilePath ".\output\stop_service.bat" -Encoding ascii
 
       - name: Build data
         shell: pwsh
