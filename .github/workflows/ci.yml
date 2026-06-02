@@ -53,18 +53,17 @@ jobs:
 
       - name: Download and build Boost
         if: steps.cache-boost.outputs.cache-hit != 'true'
-        shell: bash
+        shell: pwsh
         run: |
-          mkdir -p "$BOOST_ROOT"
-          cd "$BOOST_ROOT/.." || exit 1
-          BOOST_VER="1_84_0"
-          BOOST_URL="https://archives.boost.io/release/1.84.0/source/boost_${BOOST_VER}.7z"
-          curl -L -o "boost_${BOOST_VER}.7z" "$BOOST_URL"
-          ./output/7z.exe x "boost_${BOOST_VER}.7z" -y
-          cd "$GITHUB_WORKSPACE"
-          cp env.vs2022.bat env.bat
-          echo "BOOST_ROOT=$BOOST_ROOT" >> env.bat
-          ./build.bat boost arm64
+          $ErrorActionPreference = 'Stop'
+          $boostUrl = "https://archives.boost.io/release/1.84.0/source/boost_1_84_0.7z"
+          $boostArchive = "$env:RUNNER_TEMP\boost_1_84_0.7z"
+          $boostDest = Split-Path $env:BOOST_ROOT -Parent
+          Invoke-WebRequest -Uri $boostUrl -OutFile $boostArchive
+          tar.exe -xf $boostArchive -C $boostDest
+          Copy-Item env.vs2022.bat env.bat
+          Add-Content env.bat "BOOST_ROOT=$env:BOOST_ROOT"
+          & cmd /c ".\build.bat boost arm64"
 
       - name: Cache bundled WinSparkle
         id: cache-winsparkle
