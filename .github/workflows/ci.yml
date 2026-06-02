@@ -56,14 +56,12 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $boostUrl = "https://archives.boost.io/release/1.84.0/source/boost_1_84_0.7z"
-          $boostArchive = "$env:RUNNER_TEMP\boost_1_84_0.7z"
+          $boostUrl = "https://archives.boost.io/release/1.84.0/source/boost_1_84_0.zip"
+          $boostArchive = "$env:RUNNER_TEMP\boost_1_84_0.zip"
           $boostDest = Split-Path $env:BOOST_ROOT -Parent
           Invoke-WebRequest -Uri $boostUrl -OutFile $boostArchive
-          tar.exe -xf $boostArchive -C $boostDest
-          # Rewrite env.bat with correct CI paths, overriding hardcoded local paths
+          Expand-Archive -Path $boostArchive -DestinationPath $boostDest -Force
           Copy-Item env.vs2022.bat env.bat
-          (Get-Content env.bat) -replace 'set BOOST_ROOT=.*', "set BOOST_ROOT=$env:BOOST_ROOT" | Set-Content env.bat
           & cmd /c ".\build.bat boost arm64"
 
       - name: Cache bundled WinSparkle
