@@ -57,6 +57,8 @@
 #define IDC_WEBDAV_PASSWORD             1015
 #define IDC_WEBDAV_DEVICE_ID            1016
 #define IDC_WEBDAV_TEST_CONNECTION      1017
+#define IDC_WEBDAV_AUTO_SYNC            1018
+#define IDC_WEBDAV_SYNC_INTERVAL        1019
 #define IDC_STATIC1                     -1
 
 // Next default values for new objects

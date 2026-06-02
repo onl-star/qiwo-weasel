@@ -43,6 +43,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 
   bool needs_mutex = !wcscmp(L"/deploy", lpCmdLine) ||
                      !wcscmp(L"/sync", lpCmdLine) ||
+                     !wcscmp(L"/sync-user-dict", lpCmdLine) ||
                      !wcscmp(L"/install", lpCmdLine);
 
   if (!needs_mutex) {
@@ -83,6 +84,7 @@ static int Run(LPTSTR lpCmdLine) {
                  L"/deploy		- Update Workspace\n"
                  L"/dict		- Manage dictionary\n"
                  L"/sync		- Sync user data through Qiwo WebDAV\n"
+                 L"/sync-user-dict	- Sync user dictionary only\n"
                  L"/sync-settings	- Configure WebDAV sync\n"
                  L"/install		- Install Qiwo (Initial deployment)",
                  L"Qiwo Deployer", MB_ICONINFORMATION | MB_OK);
@@ -103,6 +105,11 @@ static int Run(LPTSTR lpCmdLine) {
   bool sync_user_dict = !wcscmp(L"/sync", lpCmdLine);
   if (sync_user_dict) {
     return configurator.SyncUserData();
+  }
+
+  bool sync_user_dict_only = !wcscmp(L"/sync-user-dict", lpCmdLine);
+  if (sync_user_dict_only) {
+    return configurator.SyncUserDict();
   }
 
   bool sync_settings = !wcscmp(L"/sync-settings", lpCmdLine);

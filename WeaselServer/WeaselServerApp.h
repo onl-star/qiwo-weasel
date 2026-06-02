@@ -71,9 +71,14 @@ class WeaselServerApp {
 
  protected:
   void SetupMenuHandlers();
+  void StartAutoSync();
+  void StopAutoSync();
+  void OnAutoSync();
+  static VOID CALLBACK AutoSyncTimerProc(HWND, UINT, UINT_PTR, DWORD);
 
   weasel::Server m_server;
   weasel::UI m_ui;
   WeaselTrayIcon tray_icon;
   std::unique_ptr<RimeWithWeaselHandler> m_handler;
+  UINT_PTR m_nAutoSyncTimerId = 0;
 };

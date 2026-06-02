@@ -405,6 +405,58 @@ int Configurator::SyncUserData() {
   return result;
 }
 
+int Configurator::SyncUserDict() {
+  // 先导出词库
+  RimeApi* rime = rime_get_api();
+  rime->sync_user_data();
+
+  // 使用 sync-user-dict 模式（仅同步 sync/ 目录）
+  auto sync_tool = QiwoSyncToolPath();
+  auto settings = LoadQiwoWebDavSettings();
+  auto remote_url = GetEnvVar(L"QIWO_WEBDAV_URL");
+  if (remote_url.empty()) {
+    remote_url = BuildQiwoRemoteUrl(settings);
+  }
+
+  if (!std::filesystem::exists(sync_tool)) {
+    LOG(ERROR) << "qiwo-rime-sync.exe not found.";
+    return 1;
+  }
+  if (remote_url.empty()) {
+    LOG(ERROR) << "WebDAV URL not configured.";
+    return 1;
+  }
+
+  std::wstring args = L"sync-user-dict ";
+  args += CommonQiwoArgs(settings.device_id);
+  args += L" --remote-url ";
+  args += QuoteArg(remote_url);
+
+  auto username = GetEnvVar(L"QIWO_WEBDAV_USERNAME");
+  if (username.empty()) username = settings.username;
+  if (!username.empty()) {
+    args += L" --username ";
+    args += QuoteArg(username);
+  }
+
+  auto password = GetEnvVar(L"QIWO_WEBDAV_PASSWORD");
+  if (!password.empty()) {
+    args += L" --password-env QIWO_WEBDAV_PASSWORD";
+  } else if (!settings.password.empty()) {
+    args += L" --password ";
+    args += QuoteArg(settings.password);
+  }
+
+  int result = RunProcess(sync_tool, args);
+  if (result == 0) {
+    // 导入词库
+    rime->sync_user_data();
+    rime->deploy();
+    rime->deploy_config_file("weasel.yaml", "config_version");
+  }
+  return result;
+}
+
 int Configurator::SyncSettings() {
   WebDavSettingsDialog dlg;
   INT_PTR result = dlg.DoModal();

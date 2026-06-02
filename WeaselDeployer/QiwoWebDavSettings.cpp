@@ -61,6 +61,12 @@ QiwoWebDavSettings LoadQiwoWebDavSettings() {
   settings.username = ReadIniString(file, L"username");
   settings.password = ReadIniString(file, L"password");
   settings.device_id = ReadIniString(file, L"device_id");
+  settings.auto_sync =
+      ReadIniString(file, L"auto_sync", L"0") == L"1";
+  settings.sync_interval_minutes =
+      _wtoi(ReadIniString(file, L"sync_interval_minutes", L"60").c_str());
+  if (settings.sync_interval_minutes < 1)
+    settings.sync_interval_minutes = 60;
   return settings;
 }
 
@@ -78,6 +84,9 @@ bool SaveQiwoWebDavSettings(const QiwoWebDavSettings& settings) {
   ok &= WriteIniString(file, L"username", Trim(settings.username));
   ok &= WriteIniString(file, L"password", settings.password);
   ok &= WriteIniString(file, L"device_id", Trim(settings.device_id));
+  ok &= WriteIniString(file, L"auto_sync", settings.auto_sync ? L"1" : L"0");
+  ok &= WriteIniString(file, L"sync_interval_minutes",
+                       std::to_wstring(settings.sync_interval_minutes));
   WritePrivateProfileStringW(nullptr, nullptr, nullptr, file.c_str());
   return ok;
 }

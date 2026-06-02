@@ -11,6 +11,7 @@ class Configurator {
   int UpdateWorkspace(bool report_errors = false);
   int DictManagement();
   int SyncUserData();
+  int SyncUserDict();
   int SyncSettings();
 
  private:

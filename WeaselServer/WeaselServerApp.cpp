@@ -10,7 +10,41 @@ WeaselServerApp::WeaselServerApp()
   SetupMenuHandlers();
 }
 
-WeaselServerApp::~WeaselServerApp() {}
+WeaselServerApp::~WeaselServerApp() { StopAutoSync(); }
+
+VOID CALLBACK WeaselServerApp::AutoSyncTimerProc(HWND hwnd, UINT, UINT_PTR id, DWORD) {
+  auto* self = reinterpret_cast<WeaselServerApp*>(
+      GetWindowLongPtr(hwnd, GWLP_USERDATA));
+  if (self) {
+    self->OnAutoSync();
+  }
+}
+
+void WeaselServerApp::OnAutoSync() {
+  std::filesystem::path dir = install_dir();
+  execute(dir / L"WeaselDeployer.exe", std::wstring(L"/sync-user-dict"));
+}
+
+void WeaselServerApp::StartAutoSync() {
+  StopAutoSync();
+  auto settings = LoadQiwoWebDavSettings();
+  if (!settings.auto_sync || settings.sync_interval_minutes <= 0)
+    return;
+
+  UINT elapse = static_cast<UINT>(settings.sync_interval_minutes) * 60 * 1000;
+  m_nAutoSyncTimerId = SetTimer(m_server.GetHWnd(), 1, elapse,
+                                 AutoSyncTimerProc);
+  // 存储 this 指针供 timer callback 使用
+  SetWindowLongPtr(m_server.GetHWnd(), GWLP_USERDATA,
+                   reinterpret_cast<LONG_PTR>(this));
+}
+
+void WeaselServerApp::StopAutoSync() {
+  if (m_nAutoSyncTimerId != 0) {
+    KillTimer(m_server.GetHWnd(), m_nAutoSyncTimerId);
+    m_nAutoSyncTimerId = 0;
+  }
+}
 
 int WeaselServerApp::Run() {
   if (!m_server.Start())
@@ -35,7 +69,11 @@ int WeaselServerApp::Run() {
   tray_icon.Create(m_server.GetHWnd());
   tray_icon.Refresh();
 
+  StartAutoSync();
+
   int ret = m_server.Run();
+
+  StopAutoSync();
 
   m_handler->Finalize();
   m_ui.Destroy();

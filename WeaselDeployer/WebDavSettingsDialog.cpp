@@ -27,6 +27,11 @@ LRESULT WebDavSettingsDialog::OnInitDialog(UINT, WPARAM, LPARAM, BOOL&) {
   SetText(IDC_WEBDAV_PASSWORD, settings_.password);
   SetText(IDC_WEBDAV_DEVICE_ID, settings_.device_id);
 
+  CheckDlgButton(IDC_WEBDAV_AUTO_SYNC,
+                 settings_.auto_sync ? BST_CHECKED : BST_UNCHECKED);
+  SetDlgItemInt(IDC_WEBDAV_SYNC_INTERVAL,
+                settings_.sync_interval_minutes, FALSE);
+
   CenterWindow();
   BringWindowToTop();
   return TRUE;
@@ -43,6 +48,12 @@ LRESULT WebDavSettingsDialog::OnSave(WORD, WORD, HWND, BOOL&) {
   settings_.username = GetText(IDC_WEBDAV_USERNAME);
   settings_.password = GetText(IDC_WEBDAV_PASSWORD);
   settings_.device_id = GetText(IDC_WEBDAV_DEVICE_ID);
+  settings_.auto_sync =
+      IsDlgButtonChecked(IDC_WEBDAV_AUTO_SYNC) == BST_CHECKED;
+  settings_.sync_interval_minutes =
+      GetDlgItemInt(IDC_WEBDAV_SYNC_INTERVAL, NULL, FALSE);
+  if (settings_.sync_interval_minutes < 1)
+    settings_.sync_interval_minutes = 60;
 
   if (BuildQiwoRemoteUrl(settings_).empty()) {
     ::MessageBoxW(m_hWnd, L"Please enter a WebDAV server URL.",

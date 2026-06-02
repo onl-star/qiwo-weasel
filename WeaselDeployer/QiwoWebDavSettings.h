@@ -9,6 +9,8 @@ struct QiwoWebDavSettings {
   std::wstring username;
   std::wstring password;
   std::wstring device_id;
+  bool auto_sync = false;
+  int sync_interval_minutes = 60;
 };
 
 std::filesystem::path QiwoWebDavSettingsFile();
