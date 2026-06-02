@@ -82,6 +82,9 @@ jobs:
             ${{ github.workspace }}\winsparkle\Release\WinSparkle.lib
           key: ${{ runner.os }}-winsparkle-v0.9.2-bundled
 
+      - uses: ilammy/msvc-dev-cmd@v1
+        if: steps.cache-winsparkle.outputs.cache-hit != 'true'
+
       - name: Build bundled WinSparkle
         if: steps.cache-winsparkle.outputs.cache-hit != 'true'
         shell: pwsh
