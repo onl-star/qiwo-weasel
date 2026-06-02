@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout last commit
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install clang-format 18
         if: ${{ !startsWith(github.ref, 'refs/tags/') }}
@@ -42,11 +42,11 @@ jobs:
       BOOST_ROOT: ${{ github.workspace }}/deps/boost_1_84_0
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Cache Boost
         id: cache-boost
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ env.BOOST_ROOT }}
           key: ${{ runner.os }}-boost-${{ env.boost_version }}
@@ -69,11 +69,11 @@ jobs:
     runs-on: windows-2022
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Cache bundled WinSparkle
         id: cache-winsparkle
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ${{ github.workspace }}\winsparkle\x64\Release\WinSparkle.dll
@@ -107,7 +107,7 @@ jobs:
       rime-tag: ${{ steps.rime-tag.outputs.tag }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Get latest Rime release tag
         id: rime-tag
@@ -118,7 +118,7 @@ jobs:
 
       - name: Cache Rime + installer resources
         id: cache-assets
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ${{ github.workspace }}\include
@@ -168,7 +168,7 @@ jobs:
       SDKVER: 10.0.19041.0
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           submodules: true
           fetch-depth: 0
@@ -188,7 +188,7 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Restore Boost cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: ${{ env.BOOST_ROOT }}
           key: ${{ runner.os }}-boost-${{ env.boost_version }}
@@ -199,7 +199,7 @@ jobs:
           sdk: ${{ env.SDKVER }}
 
       - name: Restore WinSparkle cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: |
             ${{ github.workspace }}\winsparkle\x64\Release\WinSparkle.dll
@@ -219,7 +219,7 @@ jobs:
           copy .\winsparkle\Release\WinSparkle.lib .\lib\
 
       - name: Restore Rime + installer assets
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: |
             ${{ github.workspace }}\include
@@ -265,7 +265,7 @@ jobs:
         run: output\7z.exe a -t7z "./output/archives/debug_symbols.7z" "output/*.pdb" -r
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: weasel-artifact-${{ env.git_ref_name }}
           if-no-files-found: error
@@ -278,14 +278,20 @@ jobs:
         shell: pwsh
         run: .\extract_changelog.ps1
 
+      - name: Update nightly tag
+        if: ${{ github.repository == 'rime/weasel' && github.ref == 'refs/heads/master' }}
+        run: |
+          git tag -f latest
+          git push -f origin latest
+
       - name: Create Nightly release
         if: ${{ github.repository == 'rime/weasel' && github.ref == 'refs/heads/master' }}
-        uses: 'marvinpinto/action-automatic-releases@latest'
+        uses: softprops/action-gh-release@v2
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          automatic_release_tag: latest
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: latest
           prerelease: true
-          title: "Nightly Build"
+          name: "Nightly Build"
           files: |
             ./output/archives/*weasel*.exe
             ./output/archives/debug_symbols.7z
