@@ -30,7 +30,9 @@ jobs:
       - name: Code style lint
         if: ${{ !startsWith(github.ref, 'refs/tags/') }}
         shell: bash
-        run: ./clang-format.sh -i
+        run: |
+          chmod +x clang-format.sh clang-format.ps1 2>/dev/null || true
+          ./clang-format.sh -i
 
   build:
     needs: lint
