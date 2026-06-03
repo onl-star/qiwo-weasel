@@ -334,15 +334,18 @@ rem ---------------------------------------------------------------------------
 
 rem ---------------------------------------------------------------------------
 :build_qiwo_sync
-  if exist "%WEASEL_ROOT%\qiwo-sync-core\src\qiwo-rime-sync\qiwo-rime-sync.csproj" (
-    set QIWO_SYNC_CORE_PROJ=%WEASEL_ROOT%\qiwo-sync-core\src\qiwo-rime-sync\qiwo-rime-sync.csproj
-  ) else if exist "%WEASEL_ROOT%\..\qiwo-sync-core\src\qiwo-rime-sync\qiwo-rime-sync.csproj" (
-    set QIWO_SYNC_CORE_PROJ=%WEASEL_ROOT%\..\qiwo-sync-core\src\qiwo-rime-sync\qiwo-rime-sync.csproj
+  if exist "%WEASEL_ROOT%\qiwo-sync-core\Cargo.toml" (
+    set QIWO_SYNC_CORE=%WEASEL_ROOT%\qiwo-sync-core
+  ) else if exist "%WEASEL_ROOT%\..\qiwo-sync-core\Cargo.toml" (
+    set QIWO_SYNC_CORE=%WEASEL_ROOT%\..\qiwo-sync-core
   ) else (
-    echo qiwo-sync-core not found; skipping qiwo-rime-sync publish.
+    echo qiwo-sync-core not found; skipping qiwo-rime-sync build.
     exit /b 0
   )
-  dotnet publish "%QIWO_SYNC_CORE_PROJ%" -c Release -o "%WEASEL_ROOT%\output\qiwo-sync"
+  cargo build --release --manifest-path "%QIWO_SYNC_CORE%\Cargo.toml"
+  if errorlevel 1 goto error
+  if not exist "%WEASEL_ROOT%\output\qiwo-sync" mkdir "%WEASEL_ROOT%\output\qiwo-sync"
+  copy /Y "%QIWO_SYNC_CORE%\target\release\qiwo-rime-sync.exe" "%WEASEL_ROOT%\output\qiwo-sync\"
   if errorlevel 1 goto error
   exit /b
 

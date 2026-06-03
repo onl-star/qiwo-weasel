@@ -182,10 +182,12 @@ jobs:
           cp env.vs2022.bat env.bat
           echo git_ref_name="$(git describe --always)" >> $GITHUB_ENV
 
-      - name: Setup .NET 8
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '8.0.x'
+      - name: Setup Rust
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri https://win.rustup.rs/x86_64 -OutFile rustup-init.exe
+          .\rustup-init.exe -y --default-toolchain stable --profile minimal
+          echo "$env:USERPROFILE\.cargo\bin" >> $env:GITHUB_PATH
 
       - name: Restore Boost cache
         uses: actions/cache/restore@v5

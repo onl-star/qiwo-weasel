@@ -6,6 +6,7 @@
 #include "UIStyleSettingsDialog.h"
 #include "DictManagementDialog.h"
 #include "QiwoWebDavSettings.h"
+#include "QiwoInstallationHelper.h"
 #include "WebDavSettingsDialog.h"
 #include <WeaselConstants.h>
 #include <WeaselIPC.h>
@@ -362,6 +363,15 @@ int Configurator::SyncUserData() {
                   get_weasel_ime_name().c_str(), MB_ICONERROR | MB_OK);
       result = 1;
     } else {
+      // 确保 installation.yaml 配置了 sync_dir 和 installation_id
+      auto user_data_dir = WeaselUserDataPath();
+      QiwoInstallationHelper::Ensure(u8tow(user_data_dir.u8string()),
+                                     wtou8(settings.device_id));
+
+      // 先导出用户词库
+      RimeApi* rime = rime_get_api();
+      rime->sync_user_data();
+
       std::wstring args = L"sync ";
       args += CommonQiwoArgs(settings.device_id);
       args += L" --remote-url ";
@@ -390,7 +400,8 @@ int Configurator::SyncUserData() {
         MessageBoxW(NULL, L"Qiwo WebDAV sync failed.",
                     get_weasel_ime_name().c_str(), MB_ICONERROR | MB_OK);
       } else {
-        RimeApi* rime = rime_get_api();
+        // 导入合并用户词库
+        rime->sync_user_data();
         rime->deploy();
         rime->deploy_config_file("weasel.yaml", "config_version");
       }
