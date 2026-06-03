@@ -365,7 +365,7 @@ int Configurator::SyncUserData() {
     } else {
       // 确保 installation.yaml 配置了 sync_dir 和 installation_id
       auto user_data_dir = WeaselUserDataPath();
-      QiwoInstallationHelper::Ensure(u8tow(user_data_dir.u8string()),
+      QiwoInstallationHelper::Ensure(user_data_dir.u8string(),
                                      wtou8(settings.device_id));
 
       // 先导出用户词库
