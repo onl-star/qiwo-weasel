@@ -267,7 +267,7 @@ jobs:
         run: output\7z.exe a -t7z "./output/archives/debug_symbols.7z" "output/*.pdb" -r
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: weasel-artifact-${{ env.git_ref_name }}
           if-no-files-found: error
@@ -288,7 +288,7 @@ jobs:
 
       - name: Create Nightly release
         if: ${{ github.repository == 'rime/weasel' && github.ref == 'refs/heads/master' }}
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           tag_name: latest
@@ -300,7 +300,7 @@ jobs:
 
       - name: Release (stable)
         if: ${{ github.repository == 'rime/weasel' && startsWith(github.ref, 'refs/tags/') }}
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           draft: true
           files: |
