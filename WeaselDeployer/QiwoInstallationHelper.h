@@ -17,4 +17,5 @@ class QiwoInstallationHelper {
                               const std::string& new_id);
   static std::string MakeSafeId(const std::string& device_id);
   static std::string SyncDirName();
+  static std::string SyncDirForYaml(const std::string& rime_user_dir);
 };

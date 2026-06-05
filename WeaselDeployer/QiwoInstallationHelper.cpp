@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "QiwoInstallationHelper.h"
+#include <algorithm>
 #include <fstream>
 #include <regex>
 #include <filesystem>
@@ -18,13 +19,21 @@ std::string QiwoInstallationHelper::MakeSafeId(const std::string& device_id) {
     }
     ch = static_cast<char>(std::tolower(static_cast<unsigned char>(ch)));
   }
-  return result;
+  return result.empty() ? "unknown" : result;
+}
+
+std::string QiwoInstallationHelper::SyncDirForYaml(
+    const std::string& rime_user_dir) {
+  auto path = (fs::path(rime_user_dir) / SyncDirName()).u8string();
+  std::replace(path.begin(), path.end(), '\\', '/');
+  return path;
 }
 
 void QiwoInstallationHelper::Ensure(const std::string& rime_user_dir,
                                     const std::string& device_id) {
   auto file = fs::path(rime_user_dir) / "installation.yaml";
   auto safe_id = MakeSafeId(device_id);
+  auto sync_dir = SyncDirForYaml(rime_user_dir);
 
   if (fs::exists(file)) {
     std::ifstream in(file);
@@ -36,13 +45,15 @@ void QiwoInstallationHelper::Ensure(const std::string& rime_user_dir,
 
     // 提取旧的 installation_id
     std::string old_id;
-    std::regex id_regex(R"(installation_id:\s*"([^"]*)\")");
+    std::regex id_regex(R"(^\s*installation_id:\s*(?:"([^"]*)"|([^\r\n]*))\s*$)",
+                        std::regex_constants::multiline);
     std::smatch match;
     if (std::regex_search(content, match, id_regex)) {
-      old_id = match[1].str();
+      old_id = match[1].matched ? match[1].str() : match[2].str();
     }
 
-    bool needs_update = (content.find("sync_dir:") == std::string::npos);
+    std::regex sync_regex(R"(^\s*sync_dir:\s*(?:"[^"]*"|[^\r\n]*)\s*$)",
+                          std::regex_constants::multiline);
 
     // 替换或添加 installation_id
     if (content.find("installation_id:") != std::string::npos) {
@@ -53,9 +64,12 @@ void QiwoInstallationHelper::Ensure(const std::string& rime_user_dir,
       content += "installation_id: \"" + safe_id + "\"\n";
     }
 
-    if (needs_update) {
+    if (content.find("sync_dir:") != std::string::npos) {
+      content = std::regex_replace(content, sync_regex,
+                                   "sync_dir: \"" + sync_dir + "\"");
+    } else {
       if (!content.empty() && content.back() != '\n') content += '\n';
-      content += "sync_dir: \"" + SyncDirName() + "\"\n";
+      content += "sync_dir: \"" + sync_dir + "\"\n";
     }
 
     {
@@ -69,6 +83,9 @@ void QiwoInstallationHelper::Ensure(const std::string& rime_user_dir,
     if (!old_id.empty() && old_id != safe_id) {
       MigrateSyncData(rime_user_dir, old_id, safe_id);
     }
+    auto export_dir = fs::path(rime_user_dir) / SyncDirName() / safe_id;
+    std::error_code ec;
+    fs::create_directories(export_dir, ec);
     return;
   }
 
@@ -78,7 +95,7 @@ void QiwoInstallationHelper::Ensure(const std::string& rime_user_dir,
     out << "distribution: \"Qiwo\"\n"
         << "distribution_version: \"1.0\"\n"
         << "installation_id: \"" << safe_id << "\"\n"
-        << "sync_dir: \"" << SyncDirName() << "\"\n";
+        << "sync_dir: \"" << sync_dir << "\"\n";
   }
 
   // 确保 sync 导出目录存在

@@ -16,6 +16,7 @@
 #include <rime_api.h>
 #include <rime_levers_api.h>
 #pragma warning(default : 4005)
+#include <algorithm>
 #include <filesystem>
 #include <fstream>
 #include <vector>
@@ -54,49 +55,156 @@ static std::wstring GetEnvVar(const wchar_t* name) {
   return value;
 }
 
+static std::wstring Hostname() {
+  WCHAR buffer[MAX_COMPUTERNAME_LENGTH + 1] = {0};
+  DWORD size = _countof(buffer);
+  if (GetComputerNameW(buffer, &size) && size > 0) {
+    return std::wstring(buffer, size);
+  }
+  return L"unknown";
+}
+
+static std::wstring ResolveQiwoDeviceId(
+    const std::wstring& configured_device_id = std::wstring()) {
+  auto device_id = GetEnvVar(L"QIWO_DEVICE_ID");
+  if (device_id.empty()) {
+    device_id = configured_device_id;
+  }
+  if (device_id.empty()) {
+    device_id = Hostname();
+  }
+  return device_id;
+}
+
 static std::wstring QuoteArg(const std::wstring& value) {
+  if (value.empty()) {
+    return L"\"\"";
+  }
+
   std::wstring quoted = L"\"";
+  size_t backslashes = 0;
   for (wchar_t ch : value) {
-    if (ch == L'"') {
-      quoted += L"\\\"";
+    if (ch == L'\\') {
+      ++backslashes;
+    } else if (ch == L'"') {
+      quoted.append(backslashes * 2 + 1, L'\\');
+      quoted += ch;
+      backslashes = 0;
     } else {
+      quoted.append(backslashes, L'\\');
+      backslashes = 0;
       quoted += ch;
     }
   }
+  quoted.append(backslashes * 2, L'\\');
   quoted += L"\"";
   return quoted;
 }
 
-static int RunProcess(const std::filesystem::path& exe,
-                      const std::wstring& args) {
+struct ProcessResult {
+  int exit_code = 1;
+  std::wstring output;
+};
+
+static std::wstring ProcessOutputToWide(const std::string& output) {
+  if (output.empty()) {
+    return {};
+  }
+  auto wide = string_to_wstring(output, CP_UTF8);
+  if (wide.empty()) {
+    wide = string_to_wstring(output);
+  }
+  return wide;
+}
+
+static ProcessResult RunProcess(const std::filesystem::path& exe,
+                                const std::wstring& args) {
   std::wstring command_line = QuoteArg(exe.wstring());
   if (!args.empty()) {
     command_line += L" ";
     command_line += args;
   }
 
+  SECURITY_ATTRIBUTES sa = {0};
+  sa.nLength = sizeof(sa);
+  sa.bInheritHandle = TRUE;
+  sa.lpSecurityDescriptor = nullptr;
+
+  HANDLE read_pipe = nullptr;
+  HANDLE write_pipe = nullptr;
+  if (!CreatePipe(&read_pipe, &write_pipe, &sa, 0)) {
+    return {(int)GetLastError(), L""};
+  }
+  SetHandleInformation(read_pipe, HANDLE_FLAG_INHERIT, 0);
+
   STARTUPINFOW si = {0};
   si.cb = sizeof(si);
-  si.dwFlags = STARTF_USESHOWWINDOW;
+  si.dwFlags = STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
   si.wShowWindow = SW_HIDE;
+  si.hStdOutput = write_pipe;
+  si.hStdError = write_pipe;
+  si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
 
   PROCESS_INFORMATION pi = {0};
   std::vector<wchar_t> buffer(command_line.begin(), command_line.end());
   buffer.push_back(L'\0');
 
-  BOOL ok = CreateProcessW(nullptr, buffer.data(), nullptr, nullptr, FALSE,
+  BOOL ok = CreateProcessW(nullptr, buffer.data(), nullptr, nullptr, TRUE,
                            CREATE_NO_WINDOW, nullptr, nullptr, &si, &pi);
+  CloseHandle(write_pipe);
   if (!ok) {
-    return (int)GetLastError();
+    auto error = GetLastError();
+    CloseHandle(read_pipe);
+    return {(int)error, L""};
   }
 
-  WaitForSingleObject(pi.hProcess, INFINITE);
+  std::string output;
+  char chunk[4096];
+  for (;;) {
+    DWORD available = 0;
+    while (PeekNamedPipe(read_pipe, nullptr, 0, nullptr, &available, nullptr) &&
+           available > 0) {
+      DWORD bytes_read = 0;
+      if (!ReadFile(read_pipe, chunk, sizeof(chunk), &bytes_read, nullptr) ||
+          bytes_read == 0) {
+        break;
+      }
+      output.append(chunk, chunk + bytes_read);
+      available = 0;
+    }
+
+    if (WaitForSingleObject(pi.hProcess, 50) == WAIT_OBJECT_0) {
+      break;
+    }
+  }
+
+  DWORD bytes_read = 0;
+  while (ReadFile(read_pipe, chunk, sizeof(chunk), &bytes_read, nullptr) &&
+         bytes_read > 0) {
+    output.append(chunk, chunk + bytes_read);
+  }
 
   DWORD exit_code = 1;
   GetExitCodeProcess(pi.hProcess, &exit_code);
   CloseHandle(pi.hThread);
   CloseHandle(pi.hProcess);
-  return (int)exit_code;
+  CloseHandle(read_pipe);
+  return {(int)exit_code, ProcessOutputToWide(output)};
+}
+
+static std::wstring BuildSyncFailureMessage(const ProcessResult& result) {
+  std::wstring message = L"Qiwo WebDAV sync failed.\n\nExit code: ";
+  message += std::to_wstring(result.exit_code);
+  if (!result.output.empty()) {
+    message += L"\n\n";
+    auto output = result.output;
+    if (output.size() > 1800) {
+      output = output.substr(0, 1800);
+      output += L"\n...";
+    }
+    message += output;
+  }
+  return message;
 }
 
 static std::wstring CommonQiwoArgs(
@@ -104,14 +212,8 @@ static std::wstring CommonQiwoArgs(
   std::wstring args = L"--frontend weasel --rime-user-dir ";
   args += QuoteArg(WeaselUserDataPath().wstring());
 
-  auto device_id = GetEnvVar(L"QIWO_DEVICE_ID");
-  if (device_id.empty()) {
-    device_id = configured_device_id;
-  }
-  if (!device_id.empty()) {
-    args += L" --device-id ";
-    args += QuoteArg(device_id);
-  }
+  args += L" --device-id ";
+  args += QuoteArg(ResolveQiwoDeviceId(configured_device_id));
 
   return args;
 }
@@ -365,15 +467,16 @@ int Configurator::SyncUserData() {
     } else {
       // 确保 installation.yaml 配置了 sync_dir 和 installation_id
       auto user_data_dir = WeaselUserDataPath();
+      auto device_id = ResolveQiwoDeviceId(settings.device_id);
       QiwoInstallationHelper::Ensure(user_data_dir.u8string(),
-                                     wtou8(settings.device_id));
+                                     wtou8(device_id));
 
       // 先导出用户词库
       RimeApi* rime = rime_get_api();
       rime->sync_user_data();
 
       std::wstring args = L"sync ";
-      args += CommonQiwoArgs(settings.device_id);
+      args += CommonQiwoArgs(device_id);
       args += L" --remote-url ";
       args += QuoteArg(remote_url);
 
@@ -394,10 +497,15 @@ int Configurator::SyncUserData() {
         args += QuoteArg(settings.password);
       }
 
-      result = RunProcess(sync_tool, args);
+      auto process_result = RunProcess(sync_tool, args);
+      result = process_result.exit_code;
       if (result != 0) {
         LOG(ERROR) << "Qiwo WebDAV sync failed: " << result;
-        MessageBoxW(NULL, L"Qiwo WebDAV sync failed.",
+        if (!process_result.output.empty()) {
+          LOG(ERROR) << wtou8(process_result.output);
+        }
+        auto message = BuildSyncFailureMessage(process_result);
+        MessageBoxW(NULL, message.c_str(),
                     get_weasel_ime_name().c_str(), MB_ICONERROR | MB_OK);
       } else {
         // 导入合并用户词库
@@ -418,13 +526,17 @@ int Configurator::SyncUserData() {
 }
 
 int Configurator::SyncUserDict() {
+  auto sync_tool = QiwoSyncToolPath();
+  auto settings = LoadQiwoWebDavSettings();
+  auto device_id = ResolveQiwoDeviceId(settings.device_id);
+  auto user_data_dir = WeaselUserDataPath();
+  QiwoInstallationHelper::Ensure(user_data_dir.u8string(), wtou8(device_id));
+
   // 先导出词库
   RimeApi* rime = rime_get_api();
   rime->sync_user_data();
 
   // 使用 sync-user-dict 模式（仅同步 sync/ 目录）
-  auto sync_tool = QiwoSyncToolPath();
-  auto settings = LoadQiwoWebDavSettings();
   auto remote_url = GetEnvVar(L"QIWO_WEBDAV_URL");
   if (remote_url.empty()) {
     remote_url = BuildQiwoRemoteUrl(settings);
@@ -440,7 +552,7 @@ int Configurator::SyncUserDict() {
   }
 
   std::wstring args = L"sync-user-dict ";
-  args += CommonQiwoArgs(settings.device_id);
+  args += CommonQiwoArgs(device_id);
   args += L" --remote-url ";
   args += QuoteArg(remote_url);
 
@@ -460,12 +572,18 @@ int Configurator::SyncUserDict() {
     args += QuoteArg(settings.password);
   }
 
-  int result = RunProcess(sync_tool, args);
+  auto process_result = RunProcess(sync_tool, args);
+  int result = process_result.exit_code;
   if (result == 0) {
     // 导入词库
     rime->sync_user_data();
     rime->deploy();
     rime->deploy_config_file("weasel.yaml", "config_version");
+  } else {
+    LOG(ERROR) << "Qiwo user dict WebDAV sync failed: " << result;
+    if (!process_result.output.empty()) {
+      LOG(ERROR) << wtou8(process_result.output);
+    }
   }
   return result;
 }
@@ -500,9 +618,13 @@ int Configurator::InitFrost() {
   args += L" --frost-dir ";
   args += QuoteArg(frost_dir.wstring());
 
-  int ret = RunProcess(sync_tool, args);
+  auto process_result = RunProcess(sync_tool, args);
+  int ret = process_result.exit_code;
   if (ret != 0) {
     LOG(ERROR) << "rime-frost init failed: " << ret;
+    if (!process_result.output.empty()) {
+      LOG(ERROR) << wtou8(process_result.output);
+    }
   }
   return ret;
 }
