@@ -1,11 +1,106 @@
 #include "stdafx.h"
 #include "QiwoInstallationHelper.h"
 #include <algorithm>
+#include <cctype>
 #include <fstream>
-#include <regex>
 #include <filesystem>
 
 namespace fs = std::filesystem;
+
+namespace {
+
+bool IsSpace(char ch) {
+  return std::isspace(static_cast<unsigned char>(ch)) != 0;
+}
+
+std::string Trim(std::string value) {
+  value.erase(value.begin(),
+              std::find_if(value.begin(), value.end(),
+                           [](char ch) { return !IsSpace(ch); }));
+  value.erase(
+      std::find_if(value.rbegin(), value.rend(),
+                   [](char ch) { return !IsSpace(ch); })
+          .base(),
+      value.end());
+  return value;
+}
+
+std::string EscapeYamlDoubleQuoted(const std::string& value) {
+  std::string escaped;
+  escaped.reserve(value.size());
+  for (char ch : value) {
+    if (ch == '\\' || ch == '"') {
+      escaped.push_back('\\');
+    }
+    escaped.push_back(ch);
+  }
+  return escaped;
+}
+
+std::string ParseYamlScalar(const std::string& line, size_t colon_pos) {
+  auto value = Trim(line.substr(colon_pos + 1));
+  if (value.size() >= 2 && value.front() == '"' && value.back() == '"') {
+    return value.substr(1, value.size() - 2);
+  }
+  return value;
+}
+
+bool UpsertYamlString(std::string& content,
+                      const std::string& key,
+                      const std::string& value,
+                      std::string* previous_value = nullptr) {
+  std::string updated;
+  updated.reserve(content.size() + key.size() + value.size() + 8);
+  bool found = false;
+
+  size_t pos = 0;
+  while (pos < content.size()) {
+    auto next = content.find('\n', pos);
+    auto line_end = next == std::string::npos ? content.size() : next;
+    auto eol = next == std::string::npos ? "" : "\n";
+    auto line = content.substr(pos, line_end - pos);
+    if (!line.empty() && line.back() == '\r') {
+      line.pop_back();
+      eol = "\r\n";
+    }
+
+    auto key_start = line.find_first_not_of(" \t");
+    if (key_start != std::string::npos &&
+        line.compare(key_start, key.size(), key) == 0 &&
+        key_start + key.size() < line.size() &&
+        line[key_start + key.size()] == ':') {
+      found = true;
+      if (previous_value && previous_value->empty()) {
+        *previous_value = ParseYamlScalar(line, key_start + key.size());
+      }
+      updated += line.substr(0, key_start);
+      updated += key;
+      updated += ": \"";
+      updated += EscapeYamlDoubleQuoted(value);
+      updated += "\"";
+      updated += eol;
+    } else {
+      updated += line;
+      updated += eol;
+    }
+
+    if (next == std::string::npos) break;
+    pos = next + 1;
+  }
+
+  if (!found) {
+    if (!updated.empty() && updated.back() != '\n') updated += '\n';
+    updated += key;
+    updated += ": \"";
+    updated += EscapeYamlDoubleQuoted(value);
+    updated += "\"\n";
+  }
+
+  content.swap(updated);
+  return found;
+}
+
+}  // namespace
 
 std::string QiwoInstallationHelper::SyncDirName() {
   return "sync";
@@ -43,34 +138,9 @@ void QiwoInstallationHelper::Ensure(const std::string& rime_user_dir,
                         std::istreambuf_iterator<char>());
     in.close();
 
-    // 提取旧的 installation_id
     std::string old_id;
-    std::regex id_regex(R"(^\s*installation_id:\s*(?:"([^"]*)"|([^\r\n]*))\s*$)",
-                        std::regex_constants::multiline);
-    std::smatch match;
-    if (std::regex_search(content, match, id_regex)) {
-      old_id = match[1].matched ? match[1].str() : match[2].str();
-    }
-
-    std::regex sync_regex(R"(^\s*sync_dir:\s*(?:"[^"]*"|[^\r\n]*)\s*$)",
-                          std::regex_constants::multiline);
-
-    // 替换或添加 installation_id
-    if (content.find("installation_id:") != std::string::npos) {
-      content = std::regex_replace(content, id_regex,
-                                   "installation_id: \"" + safe_id + "\"");
-    } else {
-      if (!content.empty() && content.back() != '\n') content += '\n';
-      content += "installation_id: \"" + safe_id + "\"\n";
-    }
-
-    if (content.find("sync_dir:") != std::string::npos) {
-      content = std::regex_replace(content, sync_regex,
-                                   "sync_dir: \"" + sync_dir + "\"");
-    } else {
-      if (!content.empty() && content.back() != '\n') content += '\n';
-      content += "sync_dir: \"" + sync_dir + "\"\n";
-    }
+    UpsertYamlString(content, "installation_id", safe_id, &old_id);
+    UpsertYamlString(content, "sync_dir", sync_dir);
 
     {
       std::ofstream out(file, std::ios::trunc);
