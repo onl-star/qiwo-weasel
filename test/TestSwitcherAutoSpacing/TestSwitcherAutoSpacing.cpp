@@ -54,6 +54,9 @@ int main() {
   const auto root = FindRepoRoot();
   const auto rime_with_weasel =
       ReadFile(root / "RimeWithWeasel" / "RimeWithWeasel.cpp");
+  const auto build_bat = ReadFile(root / "build.bat");
+  const auto build_qiwo_ps1 =
+      ReadFile(root / "tools" / "build-qiwo.ps1");
 
   RequireContains(rime_with_weasel, "kAutoCommitSpacingOption",
                   "Shared Rime option name");
@@ -85,6 +88,12 @@ int main() {
   const auto edit_session = ReadFile(root / "WeaselTSF" / "EditSession.cpp");
   RequireContains(edit_session, "config.auto_commit_spacing",
                   "TSF keeps config transport");
+  RequireContains(build_bat,
+                  R"(set QIWO_FROST_ROOT=%WEASEL_ROOT%\..\qiwo-ibusr\rime-frost)",
+                  "Default batch frost root");
+  RequireContains(build_qiwo_ps1,
+                  R"($RepoRoot "qiwo-ibusr/rime-frost")",
+                  "PowerShell frost root");
 
   return 0;
 }

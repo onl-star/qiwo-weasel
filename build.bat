@@ -7,7 +7,7 @@ if not exist env.bat copy env.bat.template env.bat
 if exist env.bat call env.bat
 
 if not defined WEASEL_ROOT set WEASEL_ROOT=%CD%
-if not defined QIWO_FROST_ROOT set QIWO_FROST_ROOT=%WEASEL_ROOT%\..\rime-frost
+if not defined QIWO_FROST_ROOT set QIWO_FROST_ROOT=%WEASEL_ROOT%\..\qiwo-ibusr\rime-frost
 
 if not defined VERSION_MAJOR set VERSION_MAJOR=0
 if not defined VERSION_MINOR set VERSION_MINOR=17

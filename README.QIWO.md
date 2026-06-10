@@ -61,7 +61,7 @@ changes subsequent committed text immediately. Weasel reads the live Rime option
 
 ```text
 ../qiwo-sync-core
-../rime-frost
+../qiwo-ibusr/rime-frost
 ```
 
 When building Weasel, it publishes the sync CLI and stages `rime-frost` resources
