@@ -10,6 +10,7 @@
 #include <array>
 #include <vector>
 #include <regex>
+#include <cstring>
 #include <rime_api.h>
 
 #define TRANSPARENT_COLOR 0x00000000
@@ -24,6 +25,13 @@ typedef enum { COLOR_ABGR = 0, COLOR_ARGB, COLOR_RGBA } ColorFormat;
 using namespace weasel;
 
 static RimeApi* rime_api;
+static constexpr const char* kAutoCommitSpacingOption = "auto_commit_spacing";
+static constexpr const char* kAutoCommitSpacingSavedOptionPath =
+    "var/option/auto_commit_spacing";
+static constexpr const char* kAutoCommitSpacingConfigPath =
+    "input/auto_commit_spacing";
+bool _GetInitialAutoCommitSpacing();
+bool _GetLiveAutoCommitSpacing(RimeSessionId session_id);
 WeaselSessionId _GenerateNewWeaselSessionId(SessionStatusMap sm, DWORD pid) {
   if (sm.empty())
     return (WeaselSessionId)(pid + 1);
@@ -171,6 +179,8 @@ DWORD RimeWithWeaselHandler::AddSession(LPWSTR buffer, EatLine eat) {
       return 0;
   }
   RimeSessionId session_id = (RimeSessionId)rime_api->create_session();
+  rime_api->set_option(session_id, kAutoCommitSpacingOption,
+                       Bool(_GetInitialAutoCommitSpacing()));
   if (m_global_ascii_mode) {
     for (const auto& pair : m_session_status_map) {
       if (pair.first) {
@@ -735,18 +745,52 @@ inline std::string _GetLabelText(const std::vector<Text>& labels,
   return wtou8(std::wstring(buffer));
 }
 
-bool _GetAutoCommitSpacing() {
-  bool enabled = true;
-  RimeConfig config = {NULL};
-  if (rime_api->config_open("weasel", &config)) {
-    Bool value = True;
-    if (rime_api->config_get_bool(&config, "input/auto_commit_spacing",
-                                  &value)) {
-      enabled = !!value;
-    }
-    rime_api->config_close(&config);
+bool _ReadAutoCommitSpacingConfig(const char* config_id,
+                                  const char* key,
+                                  bool* enabled) {
+  if (!rime_api) {
+    return false;
   }
-  return enabled;
+
+  RimeConfig config = {NULL};
+  bool opened = false;
+  if (strcmp(config_id, "user") == 0 &&
+      RIME_API_AVAILABLE(rime_api, user_config_open)) {
+    opened = !!rime_api->user_config_open(config_id, &config);
+  } else {
+    opened = !!rime_api->config_open(config_id, &config);
+  }
+  if (!opened) {
+    return false;
+  }
+
+  Bool value = True;
+  const bool found = !!rime_api->config_get_bool(&config, key, &value);
+  if (found) {
+    *enabled = !!value;
+  }
+  rime_api->config_close(&config);
+  return found;
+}
+
+bool _GetInitialAutoCommitSpacing() {
+  bool enabled = true;
+  if (_ReadAutoCommitSpacingConfig("user", kAutoCommitSpacingSavedOptionPath,
+                                   &enabled)) {
+    return enabled;
+  }
+  if (_ReadAutoCommitSpacingConfig("weasel", kAutoCommitSpacingConfigPath,
+                                   &enabled)) {
+    return enabled;
+  }
+  return true;
+}
+
+bool _GetLiveAutoCommitSpacing(RimeSessionId session_id) {
+  if (!session_id) {
+    return _GetInitialAutoCommitSpacing();
+  }
+  return !!rime_api->get_option(session_id, kAutoCommitSpacingOption);
 }
 
 bool RimeWithWeaselHandler::_Respond(WeaselSessionId ipc_id, EatLine eat) {
@@ -913,7 +957,7 @@ bool RimeWithWeaselHandler::_Respond(WeaselSessionId ipc_id, EatLine eat) {
       .append(std::to_wstring((int)session_status.style.inline_preedit))
       .append(L"\n")
       .append(L"config.auto_commit_spacing=")
-      .append(std::to_wstring((int)_GetAutoCommitSpacing()))
+      .append(std::to_wstring((int)_GetLiveAutoCommitSpacing(session_id)))
       .append(L"\n");
 
   // style

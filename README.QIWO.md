@@ -14,6 +14,7 @@ changes happen here.
 - installer staging publishes `qiwo-rime-sync` into `qiwo-sync`
 - `WeaselDeployer.exe /sync` runs Qiwo WebDAV sync and redeploys Rime afterward
 - tray and TSF language bar menus expose WebDAV sync settings
+- `Ctrl+grave` / `F4` Rime switcher exposes the Qiwo auto spacing option
 
 ## WebDAV settings
 
@@ -46,6 +47,13 @@ $env:QIWO_DEVICE_ID = "windows-main"
 
 The username/password fields are optional if the WebDAV endpoint does not need
 Basic auth.
+
+## Input formatting
+
+The `Ctrl+grave` / `F4` Rime switcher includes `中英数字自动空格`. Toggling it
+changes subsequent committed text immediately. Weasel reads the live Rime option
+`auto_commit_spacing`; if no switcher state has been saved yet, it falls back to
+`input/auto_commit_spacing` in `weasel.yaml`, then defaults to enabled.
 
 ## Build notes
 
