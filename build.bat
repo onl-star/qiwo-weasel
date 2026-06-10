@@ -197,6 +197,9 @@ cscript.exe render.js weasel.props %WEASEL_PROJECT_PROPERTIES%
 
 del msbuild*.log
 
+call :build_qiwo_input_format
+if errorlevel 1 goto error
+
 if defined SDKVER set build_sdk_option=/p:WindowsTargetPlatformVersion=%SDKVER%
 if not defined SDKVER set build_sdk_option=
 if not defined MAKENSIS set "MAKENSIS=%ProgramFiles(x86)%\NSIS\Bin\makensis.exe"
@@ -329,6 +332,45 @@ rem ---------------------------------------------------------------------------
   cd %WEASEL_ROOT%
   if not exist output\data\opencc mkdir output\data\opencc
   copy %WEASEL_ROOT%\librime\share\opencc\*.* output\data\opencc\
+  if errorlevel 1 goto error
+  exit /b
+
+rem ---------------------------------------------------------------------------
+:build_qiwo_input_format
+  if defined QIWO_INPUT_FORMAT_CORE (
+    if exist "%QIWO_INPUT_FORMAT_CORE%\Cargo.toml" goto qiwo_input_format_core_found
+  )
+  if exist "%WEASEL_ROOT%\qiwo-input-format-core\Cargo.toml" (
+    set QIWO_INPUT_FORMAT_CORE=%WEASEL_ROOT%\qiwo-input-format-core
+  ) else if exist "%WEASEL_ROOT%\..\qiwo-input-format-core\Cargo.toml" (
+    set QIWO_INPUT_FORMAT_CORE=%WEASEL_ROOT%\..\qiwo-input-format-core
+  ) else (
+    echo Error: qiwo-input-format-core not found.
+    exit /b 1
+  )
+
+:qiwo_input_format_core_found
+  echo QIWO_INPUT_FORMAT_CORE=%QIWO_INPUT_FORMAT_CORE%
+  call :build_qiwo_input_format_target x86_64-pc-windows-msvc lib64
+  if errorlevel 1 exit /b 1
+  call :build_qiwo_input_format_target i686-pc-windows-msvc lib
+  if errorlevel 1 exit /b 1
+  if %build_arm64% == 1 (
+    call :build_qiwo_input_format_target aarch64-pc-windows-msvc libARM64
+    if errorlevel 1 exit /b 1
+    call :build_qiwo_input_format_target thumbv7a-pc-windows-msvc libARM
+    if errorlevel 1 exit /b 1
+  )
+  exit /b
+
+rem ---------------------------------------------------------------------------
+:build_qiwo_input_format_target
+  set QIWO_INPUT_FORMAT_TARGET=%~1
+  set QIWO_INPUT_FORMAT_LIB_DIR=%~2
+  cargo rustc --manifest-path "%QIWO_INPUT_FORMAT_CORE%\Cargo.toml" -p qiwo-input-format --release --target %QIWO_INPUT_FORMAT_TARGET% -- --crate-type staticlib
+  if errorlevel 1 goto error
+  if not exist "%WEASEL_ROOT%\%QIWO_INPUT_FORMAT_LIB_DIR%" mkdir "%WEASEL_ROOT%\%QIWO_INPUT_FORMAT_LIB_DIR%"
+  copy /Y "%QIWO_INPUT_FORMAT_CORE%\target\%QIWO_INPUT_FORMAT_TARGET%\release\qiwo_input_format.lib" "%WEASEL_ROOT%\%QIWO_INPUT_FORMAT_LIB_DIR%\"
   if errorlevel 1 goto error
   exit /b
 

@@ -187,9 +187,13 @@ struct Status {
 
 // 用於向前端告知設置信息
 struct Config {
-  Config() : inline_preedit(false) {}
-  void reset() { inline_preedit = false; }
+  Config() : inline_preedit(false), auto_commit_spacing(true) {}
+  void reset() {
+    inline_preedit = false;
+    auto_commit_spacing = true;
+  }
   bool inline_preedit;
+  bool auto_commit_spacing;
 };
 
 struct UIStyle {

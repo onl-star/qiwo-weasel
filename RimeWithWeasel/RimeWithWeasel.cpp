@@ -735,6 +735,20 @@ inline std::string _GetLabelText(const std::vector<Text>& labels,
   return wtou8(std::wstring(buffer));
 }
 
+bool _GetAutoCommitSpacing() {
+  bool enabled = true;
+  RimeConfig config = {NULL};
+  if (rime_api->config_open("weasel", &config)) {
+    Bool value = True;
+    if (rime_api->config_get_bool(&config, "input/auto_commit_spacing",
+                                  &value)) {
+      enabled = !!value;
+    }
+    rime_api->config_close(&config);
+  }
+  return enabled;
+}
+
 bool RimeWithWeaselHandler::_Respond(WeaselSessionId ipc_id, EatLine eat) {
   std::wstring body;
   body.reserve(4096);
@@ -897,6 +911,9 @@ bool RimeWithWeaselHandler::_Respond(WeaselSessionId ipc_id, EatLine eat) {
   actions.push_back("config");
   body.append(L"config.inline_preedit=")
       .append(std::to_wstring((int)session_status.style.inline_preedit))
+      .append(L"\n")
+      .append(L"config.auto_commit_spacing=")
+      .append(std::to_wstring((int)_GetAutoCommitSpacing()))
       .append(L"\n");
 
   // style

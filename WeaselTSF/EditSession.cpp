@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "WeaselTSF.h"
 #include "CandidateList.h"
+#include "QiwoInputFormatter.h"
 #include "ResponseParser.h"
 
 STDAPI WeaselTSF::DoEditSession(TfEditCookie ec) {
@@ -23,6 +24,8 @@ STDAPI WeaselTSF::DoEditSession(TfEditCookie ec) {
         _StartComposition(_pEditSessionContext,
                           _fCUASWorkaroundEnabled && !config.inline_preedit);
       }
+      commit = QiwoInputFormatter::FormatCommitText(commit,
+                                                    config.auto_commit_spacing);
       _InsertText(_pEditSessionContext, commit);
       _EndComposition(_pEditSessionContext, false);
       _committed = TRUE;
