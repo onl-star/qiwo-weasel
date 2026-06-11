@@ -13,5 +13,5 @@
 	url = https://github.com/gaboolic/rime-frost.git
 [submodule "qiwo-input-format-core"]
 	path = qiwo-input-format-core
-	url = https://github.com/onl-star/qiwo-input-format-core.git
+	url = https://github.com/LeaWron/qiwo-input-format-core.git
 	branch = main

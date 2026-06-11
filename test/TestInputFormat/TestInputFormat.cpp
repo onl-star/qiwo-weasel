@@ -143,7 +143,7 @@ int main() {
   RequireContains(gitmodules, "path = qiwo-input-format-core",
                   "Input format core submodule path");
   RequireContains(gitmodules,
-                  "url = https://github.com/onl-star/qiwo-input-format-core.git",
+                  "url = https://github.com/LeaWron/qiwo-input-format-core.git",
                   "Input format core repository URL");
 
   return 0;
