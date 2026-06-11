@@ -89,6 +89,7 @@ STDAPI WeaselTSF::DoEditSession(TfEditCookie ec) {
   _UpdateLanguageBar(_status);
 
   if (ok) {
+    _autoCommitSpacingEnabled = config.auto_commit_spacing;
     if (!commit.empty()) {
       // For auto-selecting, commit and preedit can both exist.
       // Commit and close the original composition first.

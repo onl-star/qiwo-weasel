@@ -85,6 +85,8 @@ int main() {
   RequireContains(edit_session, "QiwoInputFormatter", "Commit hook wrapper");
   RequireContains(edit_session, "config.auto_commit_spacing",
                   "Commit hook setting");
+  RequireContains(edit_session, "_autoCommitSpacingEnabled = config.auto_commit_spacing",
+                  "Direct input fallback follows live setting");
   RequireContains(edit_session, "FormatCommitText(",
                   "Commit formatting before insertion");
   RequireContains(edit_session, "GetTextBeforeComposition",
@@ -95,6 +97,23 @@ int main() {
                   "Commit formatter receives cursor context");
   RequireContains(edit_session, "_InsertText(_pEditSessionContext, commit)",
                   "Commit insertion remains centralized");
+
+  const auto key_event_sink = ReadFile(root / "WeaselTSF" / "KeyEventSink.cpp");
+  RequireContains(key_event_sink, "CDirectFormattedTextEditSession",
+                  "Direct input edit session");
+  RequireContains(key_event_sink, "IsDirectFormattableKey",
+                  "Direct input safety filter");
+  RequireContains(key_event_sink,
+                  "ibus::RELEASE_MASK | ibus::CONTROL_MASK | ibus::ALT_MASK",
+                  "Direct input modifier guard");
+  RequireContains(key_event_sink, "QiwoInputFormatter::FormatCommitText",
+                  "Direct input uses shared formatter");
+  RequireContains(key_event_sink, "formatted == _text",
+                  "Direct input does not eat unchanged text");
+  RequireContains(key_event_sink, "TF_ES_SYNC | TF_ES_READWRITE",
+                  "Direct input computes formatting before eating the key");
+  RequireContains(key_event_sink, "_TryCommitDirectFormattedText",
+                  "Key event direct input fallback hook");
 
   const auto vcxproj = ReadFile(root / "WeaselTSF" / "WeaselTSF.vcxproj");
   RequireContains(vcxproj, "QiwoInputFormatter.cpp", "Project source entry");

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Globals.h"
+#include <KeyEvent.h>
 #include <WeaselIPC.h>
 #include <WeaselIPCData.h>
 
@@ -169,7 +170,12 @@ class WeaselTSF : public ITfTextInputProcessorEx,
 
   BOOL _InitKeyEventSink();
   void _UninitKeyEventSink();
-  void _ProcessKeyEvent(WPARAM wParam, LPARAM lParam, BOOL* pfEaten);
+  void _ProcessKeyEvent(WPARAM wParam,
+                        LPARAM lParam,
+                        BOOL* pfEaten,
+                        weasel::KeyEvent* pKeyEvent = nullptr);
+  BOOL _TryCommitDirectFormattedText(com_ptr<ITfContext> pContext,
+                                     const weasel::KeyEvent& keyEvent);
 
   BOOL _InitPreservedKey();
   void _UninitPreservedKey();
@@ -227,6 +233,7 @@ class WeaselTSF : public ITfTextInputProcessorEx,
 
   /* IME status */
   weasel::Status _status;
+  bool _autoCommitSpacingEnabled = true;
 
   // guidatom for the display attibute.
   TfGuidAtom _gaDisplayAttributeInput;
