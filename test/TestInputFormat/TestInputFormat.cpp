@@ -93,6 +93,12 @@ int main() {
   RequireContains(build_bat, "qiwo-input-format-core",
                   "Input format core discovery");
 
+  const auto ci_workflow = ReadFile(root / ".github" / "workflows" / "ci.yml");
+  RequireContains(ci_workflow, "aarch64-pc-windows-msvc",
+                  "CI installs Windows ARM64 Rust target");
+  RequireContains(ci_workflow, "thumbv7a-pc-windows-msvc",
+                  "CI installs Windows ARM Rust target");
+
   const auto gitmodules = ReadFile(root / ".gitmodules");
   RequireContains(gitmodules, "path = qiwo-input-format-core",
                   "Input format core submodule path");
