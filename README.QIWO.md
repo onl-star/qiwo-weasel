@@ -58,6 +58,11 @@ changes subsequent committed text immediately. Weasel reads the live Rime option
 `rime-frost` stays an upstream schema resource. Qiwo injects the switcher entry
 through generated `default.custom.yaml` and `rime_frost*.custom.yaml` patches;
 the committed-text formatting is implemented by `qiwo-input-format-core`.
+Existing custom YAML files are not overwritten; Qiwo only merges the missing
+switcher/save-options patch entries it owns. When TSF can read the surrounding
+document text, the formatter also handles spacing at the cursor boundary; if the
+target application does not expose surrounding text, it still formats the current
+commit text internally.
 
 ## Build notes
 

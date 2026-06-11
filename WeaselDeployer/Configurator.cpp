@@ -19,10 +19,27 @@
 #include <algorithm>
 #include <filesystem>
 #include <fstream>
+#include <iterator>
+#include <sstream>
 #include <vector>
 #include "WeaselDeployer.h"
 
 namespace {
+
+struct QiwoYamlPatchEntry {
+  const char* needle;
+  const char* entry;
+};
+
+const QiwoYamlPatchEntry kDefaultCustomPatchEntries[] = {
+    {"switcher/hotkeys/@next: F4", "  switcher/hotkeys/@next: F4"},
+    {"switcher/save_options/@next: auto_commit_spacing",
+     "  switcher/save_options/@next: auto_commit_spacing"},
+};
+
+static std::string AppendYamlPatchEntries(
+    const std::string& content,
+    const std::vector<std::string>& entries);
 
 static std::filesystem::path InstallDir() {
   WCHAR exe_path[MAX_PATH] = {0};
@@ -223,6 +240,29 @@ static bool EnsureDefaultCustomYaml() {
       WeaselUserDataPath() / L"default.custom.yaml";
   if (std::filesystem::exists(file_path) &&
       std::filesystem::file_size(file_path) > 0) {
+    std::ifstream in(file_path, std::ios::binary);
+    if (!in) {
+      return false;
+    }
+
+    std::stringstream buffer;
+    buffer << in.rdbuf();
+    auto content = buffer.str();
+    std::vector<std::string> missing_entries;
+    for (const auto& entry : kDefaultCustomPatchEntries) {
+      if (content.find(entry.needle) == std::string::npos) {
+        missing_entries.push_back(entry.entry);
+      }
+    }
+    if (missing_entries.empty()) {
+      return true;
+    }
+
+    std::ofstream out(file_path, std::ios::binary | std::ios::trunc);
+    if (!out) {
+      return false;
+    }
+    out << AppendYamlPatchEntries(content, missing_entries);
     return true;
   }
 
@@ -237,6 +277,57 @@ static bool EnsureDefaultCustomYaml() {
       << "  switcher/hotkeys/@next: F4\n"
       << "  switcher/save_options/@next: auto_commit_spacing\n";
   return true;
+}
+
+static std::string AppendYamlPatchEntries(
+    const std::string& content,
+    const std::vector<std::string>& entries) {
+  std::vector<std::string> lines;
+  std::stringstream input(content);
+  std::string line;
+  while (std::getline(input, line)) {
+    if (!line.empty() && line.back() == '\r') {
+      line.pop_back();
+    }
+    lines.push_back(line);
+  }
+
+  auto patch_it = std::find(lines.begin(), lines.end(), "patch:");
+  if (patch_it == lines.end()) {
+    std::string output = content;
+    if (!output.empty() && output.back() != '\n') {
+      output.push_back('\n');
+    }
+    if (!output.empty()) {
+      output.push_back('\n');
+    }
+    output += "patch:\n";
+    for (const auto& entry : entries) {
+      output += entry;
+      if (entry.empty() || entry.back() != '\n') {
+        output.push_back('\n');
+      }
+    }
+    return output;
+  }
+
+  auto insertion_it = lines.end();
+  for (auto it = std::next(patch_it); it != lines.end(); ++it) {
+    if (!it->empty() && (*it)[0] != ' ' && (*it)[0] != '\t' &&
+        (*it)[0] != '#') {
+      insertion_it = it;
+      break;
+    }
+  }
+
+  lines.insert(insertion_it, entries.begin(), entries.end());
+
+  std::string output;
+  for (const auto& output_line : lines) {
+    output += output_line;
+    output.push_back('\n');
+  }
+  return output;
 }
 
 static void CreateFileIfNotExist(std::string filename) {

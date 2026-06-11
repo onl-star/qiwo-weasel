@@ -85,8 +85,14 @@ int main() {
   RequireContains(edit_session, "QiwoInputFormatter", "Commit hook wrapper");
   RequireContains(edit_session, "config.auto_commit_spacing",
                   "Commit hook setting");
-  RequireContains(edit_session, "FormatCommitText(commit",
+  RequireContains(edit_session, "FormatCommitText(",
                   "Commit formatting before insertion");
+  RequireContains(edit_session, "GetTextBeforeComposition",
+                  "Commit formatter reads before-cursor context");
+  RequireContains(edit_session, "GetTextAfterComposition",
+                  "Commit formatter reads after-cursor context");
+  RequireContains(edit_session, "before_cursor, after_cursor",
+                  "Commit formatter receives cursor context");
   RequireContains(edit_session, "_InsertText(_pEditSessionContext, commit)",
                   "Commit insertion remains centralized");
 

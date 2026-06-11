@@ -89,6 +89,10 @@ int main() {
   const auto edit_session = ReadFile(root / "WeaselTSF" / "EditSession.cpp");
   RequireContains(edit_session, "config.auto_commit_spacing",
                   "TSF keeps config transport");
+  RequireContains(edit_session, "GetTextBeforeComposition",
+                  "TSF passes before-cursor context to formatter");
+  RequireContains(edit_session, "GetTextAfterComposition",
+                  "TSF passes after-cursor context to formatter");
   const auto deployer_configurator =
       ReadFile(root / "WeaselDeployer" / "Configurator.cpp");
   RequireContains(deployer_configurator, "switcher/hotkeys/@next: F4",
@@ -96,6 +100,10 @@ int main() {
   RequireContains(deployer_configurator,
                   "switcher/save_options/@next: auto_commit_spacing",
                   "Default custom YAML persists auto spacing switcher option");
+  RequireContains(deployer_configurator, "AppendYamlPatchEntries",
+                  "Default custom YAML merges missing Qiwo patches");
+  RequireNotContains(deployer_configurator, "file_size(file_path) > 0) {\n    return true;",
+                     "Default custom YAML must not skip non-empty files");
   RequireContains(gitmodules, "path = rime-frost",
                   "rime-frost submodule path");
   RequireContains(gitmodules, "gaboolic/rime-frost.git",
