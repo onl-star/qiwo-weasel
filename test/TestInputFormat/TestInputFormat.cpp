@@ -94,6 +94,11 @@ int main() {
   RequireContains(vcxproj, "QiwoInputFormatter.cpp", "Project source entry");
   RequireContains(vcxproj, "QiwoInputFormatter.h", "Project header entry");
   RequireContains(vcxproj, "qiwo_input_format.lib", "Native library link");
+  RequireContains(vcxproj, "Ws2_32.lib", "Rust staticlib winsock link");
+  RequireContains(vcxproj, "Userenv.lib", "Rust staticlib userenv link");
+  RequireContains(vcxproj, "Ntdll.lib", "Rust staticlib ntdll link");
+  RequireContains(vcxproj, "Secur32.lib", "Rust staticlib secur32 link");
+  RequireContains(vcxproj, "Bcrypt.lib", "Rust staticlib bcrypt link");
 
   const auto build_bat = ReadFile(root / "build.bat");
   RequireContains(build_bat, ":build_qiwo_input_format",
