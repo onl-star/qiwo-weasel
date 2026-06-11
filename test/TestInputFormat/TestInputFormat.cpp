@@ -93,5 +93,12 @@ int main() {
   RequireContains(build_bat, "qiwo-input-format-core",
                   "Input format core discovery");
 
+  const auto gitmodules = ReadFile(root / ".gitmodules");
+  RequireContains(gitmodules, "path = qiwo-input-format-core",
+                  "Input format core submodule path");
+  RequireContains(gitmodules,
+                  "url = https://github.com/onl-star/qiwo-input-format-core.git",
+                  "Input format core repository URL");
+
   return 0;
 }
