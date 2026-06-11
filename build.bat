@@ -208,9 +208,6 @@ if not defined SDKVER set build_sdk_option=
 if not defined MAKENSIS set "MAKENSIS=%ProgramFiles(x86)%\NSIS\Bin\makensis.exe"
 
 if %build_arm64% == 1 (
-
-  msbuild.exe weasel.sln %build_option% /p:Configuration=%build_config% /p:Platform="ARM" /fl6 %build_sdk_option%
-  if errorlevel 1 goto error
   msbuild.exe weasel.sln %build_option% /p:Configuration=%build_config% /p:Platform="ARM64" /fl5 %build_sdk_option%
   if errorlevel 1 goto error
 )
@@ -360,8 +357,6 @@ rem ---------------------------------------------------------------------------
   if errorlevel 1 exit /b 1
   if %build_arm64% == 1 (
     call :build_qiwo_input_format_target aarch64-pc-windows-msvc libARM64
-    if errorlevel 1 exit /b 1
-    call :build_qiwo_input_format_target thumbv7a-pc-windows-msvc libARM
     if errorlevel 1 exit /b 1
   )
   exit /b

@@ -39,6 +39,14 @@ void RequireContains(const std::string& haystack,
   }
 }
 
+void RequireNotContains(const std::string& haystack,
+                        const std::string& needle,
+                        const std::string& label) {
+  if (haystack.find(needle) != std::string::npos) {
+    throw std::runtime_error(label + " must not contain: " + needle);
+  }
+}
+
 }  // namespace
 
 int main() {
@@ -96,8 +104,10 @@ int main() {
   const auto ci_workflow = ReadFile(root / ".github" / "workflows" / "ci.yml");
   RequireContains(ci_workflow, "aarch64-pc-windows-msvc",
                   "CI installs Windows ARM64 Rust target");
-  RequireContains(ci_workflow, "thumbv7a-pc-windows-msvc",
-                  "CI installs Windows ARM Rust target");
+  RequireNotContains(ci_workflow, "thumbv7a-pc-windows-msvc",
+                     "CI Rust target list");
+  RequireNotContains(build_bat, "thumbv7a-pc-windows-msvc",
+                     "Input format build target list");
 
   const auto gitmodules = ReadFile(root / ".gitmodules");
   RequireContains(gitmodules, "path = qiwo-input-format-core",
