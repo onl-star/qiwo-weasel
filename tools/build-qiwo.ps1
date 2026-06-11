@@ -110,7 +110,19 @@ function Ensure-RimePrebuilt {
 }
 
 function Ensure-QiwoData {
-  $FrostRoot = Join-Path $RepoRoot "qiwo-ibusr/rime-frost"
+  $FrostRoot = Join-Path $WeaselRoot "rime-frost"
+  if (!(Test-Path (Join-Path $FrostRoot "essay.txt")) -and (Test-Path (Join-Path $WeaselRoot ".gitmodules"))) {
+    Push-Location $WeaselRoot
+    try {
+      & git submodule update --init rime-frost
+      if ($LASTEXITCODE -ne 0) {
+        throw "git submodule update --init rime-frost failed"
+      }
+    }
+    finally {
+      Pop-Location
+    }
+  }
   if (!(Test-Path (Join-Path $FrostRoot "essay.txt"))) {
     throw "rime-frost was not found at $FrostRoot"
   }
@@ -196,7 +208,7 @@ function Invoke-QiwoBuild([string]$VsDevCmd, [string]$BoostRoot, [string]$Makens
     "set BOOST_ROOT=$BoostRoot",
     "set BJAM_TOOLSET=msvc",
     "set PLATFORM_TOOLSET=v143",
-    "set QIWO_FROST_ROOT=$RepoRoot\qiwo-ibusr\rime-frost"
+    "set QIWO_FROST_ROOT=$WeaselRoot\rime-frost"
   )
   if ($Makensis) {
     $Lines += "set MAKENSIS=$Makensis"

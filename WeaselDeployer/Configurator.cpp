@@ -233,7 +233,9 @@ static bool EnsureDefaultCustomYaml() {
 
   out << "patch:\n"
       << "  schema_list:\n"
-      << "    - schema: rime_frost\n";
+      << "    - schema: rime_frost\n"
+      << "  switcher/hotkeys/@next: F4\n"
+      << "  switcher/save_options/@next: auto_commit_spacing\n";
   return true;
 }
 

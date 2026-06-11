@@ -55,13 +55,17 @@ changes subsequent committed text immediately. Weasel reads the live Rime option
 `auto_commit_spacing`; if no switcher state has been saved yet, it falls back to
 `input/auto_commit_spacing` in `weasel.yaml`, then defaults to enabled.
 
+`rime-frost` stays an upstream schema resource. Qiwo injects the switcher entry
+through generated `default.custom.yaml` and `rime_frost*.custom.yaml` patches;
+the committed-text formatting is implemented by `qiwo-input-format-core`.
+
 ## Build notes
 
-`build.bat` expects the monorepo layout:
+`build.bat` expects these repository-local submodules:
 
 ```text
-../qiwo-sync-core
-../qiwo-ibusr/rime-frost
+qiwo-sync-core
+rime-frost
 ```
 
 When building Weasel, it publishes the sync CLI and stages `rime-frost` resources

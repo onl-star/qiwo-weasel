@@ -8,3 +8,6 @@
 	path = qiwo-sync-core
 	url = ../qiwo-sync-core.git
 	branch = main
+[submodule "rime-frost"]
+	path = rime-frost
+	url = https://github.com/gaboolic/rime-frost.git
